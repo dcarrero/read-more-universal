@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Read More Universal
  * Plugin URI: https://github.com/dcarrero/read-more-universal
- * Description: Universal "Read More" system that automatically adapts to Twenty Twenty-Five, Astra, Elementor and other popular themes.
- * Version: 1.1.2
+ * Description: Universal "Read More" system optimized for WordPress Twenty themes with manual integration for other themes.
+ * Version: 2.0.0
  * Author: David Carrero Fernández-Baillo
  * Author URI: https://carrero.es
  * License: GPL v2 or later
@@ -49,108 +49,49 @@ class ReadMoreUniversal {
         $theme_name = strtolower($theme->get('Name'));
         $template = get_template();
         
-        // Detectar si Elementor está activo
-        $elementor_active = is_plugin_active('elementor/elementor.php') || defined('ELEMENTOR_VERSION');
-        
-        // Detectar tema y configurar selectores específicos
-        if (strpos($theme_name, 'astra') !== false || $template === 'astra') {
-            $this->theme_name = 'astra';
-            if ($elementor_active) {
-                $this->theme_name = 'astra-elementor';
-                $this->theme_selectors = array(
-                    '.elementor-widget-theme-post-content .elementor-widget-container',
-                    '.elementor-post-content',
-                    '.elementor-widget-text-editor',
-                    '.elementor-text-editor',
-                    '.elementor .entry-content',
-                    '.ast-article-post .entry-content',
-                    '.entry-content',
-                    'article .entry-content'
-                );
-            } else {
-                $this->theme_selectors = array(
-                    '.ast-article-post .entry-content',
-                    '.single-post .entry-content',
-                    '.ast-article-single .entry-content',
-                    '.entry-content',
-                    'article .entry-content',
-                    '.post-content',
-                    '.ast-container .entry-content'
-                );
-            }
-        } elseif (strpos($theme_name, 'twenty twenty-five') !== false || $template === 'twentytwentyfive') {
+        // Detectar solo temas Twenty de WordPress
+        if (strpos($theme_name, 'twenty twenty-five') !== false || $template === 'twentytwentyfive') {
             $this->theme_name = 'twentytwentyfive';
             $this->theme_selectors = array(
-                '.wp-block-post-content',
-                '.entry-content',
-                '.post-content'
+                '.wp-block-post-content'
             );
         } elseif (strpos($theme_name, 'twenty twenty-four') !== false || $template === 'twentytwentyfour') {
             $this->theme_name = 'twentytwentyfour';
             $this->theme_selectors = array(
-                '.wp-block-post-content',
-                '.entry-content'
+                '.wp-block-post-content'
             );
         } elseif (strpos($theme_name, 'twenty twenty-three') !== false || $template === 'twentytwentythree') {
             $this->theme_name = 'twentytwentythree';
             $this->theme_selectors = array(
-                '.wp-block-post-content',
+                '.wp-block-post-content'
+            );
+        } elseif (strpos($theme_name, 'twenty twenty-two') !== false || $template === 'twentytwentytwo') {
+            $this->theme_name = 'twentytwentytwo';
+            $this->theme_selectors = array(
+                '.wp-block-post-content'
+            );
+        } elseif (strpos($theme_name, 'twenty twenty-one') !== false || $template === 'twentytwentyone') {
+            $this->theme_name = 'twentytwentyone';
+            $this->theme_selectors = array(
+                '.entry-content'
+            );
+        } elseif (strpos($theme_name, 'twenty twenty') !== false || $template === 'twentytwenty') {
+            $this->theme_name = 'twentytwenty';
+            $this->theme_selectors = array(
                 '.entry-content'
             );
         } elseif (strpos($theme_name, 'twenty') !== false) {
-            $this->theme_name = 'twenty-default';
+            // Otros temas Twenty
+            $this->theme_name = 'twenty-other';
             $this->theme_selectors = array(
-                '.entry-content',
-                '.post-content',
-                'article .entry-content'
-            );
-        } elseif (strpos($theme_name, 'elementor') !== false || $template === 'hello-elementor' || $elementor_active) {
-            $this->theme_name = 'elementor';
-            $this->theme_selectors = array(
-                '.elementor-widget-theme-post-content .elementor-widget-container',
-                '.elementor-post-content',
-                '.elementor-widget-text-editor',
-                '.elementor-text-editor .elementor-widget-container',
-                '.elementor .entry-content',
                 '.entry-content',
                 '.post-content'
             );
-        } elseif (strpos($theme_name, 'generatepress') !== false || $template === 'generatepress') {
-            $this->theme_name = 'generatepress';
-            $this->theme_selectors = array(
-                '.entry-content',
-                'article .entry-content'
-            );
-        } elseif (strpos($theme_name, 'oceanwp') !== false || $template === 'oceanwp') {
-            $this->theme_name = 'oceanwp';
-            $this->theme_selectors = array(
-                '.entry-content',
-                '.single-post .entry-content'
-            );
         } else {
-            // Tema genérico - usar selectores universales MÁS AMPLIOS
-            $this->theme_name = 'generic';
+            // Tema no soportado automáticamente
+            $this->theme_name = 'manual';
             $this->theme_selectors = array(
-                // Elementor selectors
-                '.elementor-widget-theme-post-content .elementor-widget-container',
-                '.elementor-post-content',
-                '.elementor-widget-text-editor',
-                '.elementor-text-editor',
-                // WordPress selectors
-                '.entry-content',
-                '.post-content',
-                '.wp-block-post-content',
-                'article .entry-content',
-                '.content-area .entry-content',
-                // Generic selectors
-                'main .content',
-                '.main-content',
-                '.post-body',
-                '.article-content',
-                // Fallback selectors
-                '[class*="entry-content"]',
-                '[class*="post-content"]',
-                '[class*="content"]'
+                '.rmu-content-target' // Clase especial para integración manual
             );
         }
     }
@@ -171,24 +112,11 @@ class ReadMoreUniversal {
         
         $this->output_styles();
         $this->output_script();
-        
-        // Agregar funcionalidad específica para Astra
-        if ($this->theme_name === 'astra' || $this->theme_name === 'astra-elementor') {
-            $this->add_astra_specific_functionality();
-        }
     }
     
     private function add_astra_specific_functionality() {
-        // Eliminar funcionalidad específica de Astra que causa problemas
-        // El script principal ya debería manejar Astra correctamente
-        ?>
-        <style>
-        /* Asegurar que solo haya un wrapper visible */
-        .rmu-wrapper:not([data-rmu-id="main-content"]) {
-            display: none !important;
-        }
-        </style>
-        <?php
+        // Función eliminada - Plugin v2.0.0 enfocado en temas Twenty
+        // Para otros temas, usar integración manual con clase .rmu-content-target
     }
     
     private function output_styles() {
@@ -674,7 +602,15 @@ class ReadMoreUniversal {
             <div style="background: #f1f1f1; padding: 15px; border-radius: 5px; margin: 20px 0;">
                 <!-- translators: %s is the theme name -->
                 <h3><?php printf(esc_html__('🎯 Detected theme: %s', 'read-more-universal'), '<strong>' . esc_html(ucfirst($this->theme_name)) . '</strong>'); ?></h3>
-                <p><?php esc_html_e('The plugin has been automatically configured for your theme.', 'read-more-universal'); ?></p>
+                <?php if ($this->theme_name === 'manual'): ?>
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                        <p><strong><?php esc_html_e('Manual Integration Required', 'read-more-universal'); ?></strong></p>
+                        <p><?php esc_html_e('Your theme is not automatically supported. Add the class', 'read-more-universal'); ?> <code>rmu-content-target</code> <?php esc_html_e('to your post content container.', 'read-more-universal'); ?></p>
+                        <p><?php esc_html_e('Example:', 'read-more-universal'); ?> <code>&lt;div class="entry-content rmu-content-target"&gt;</code></p>
+                    </div>
+                <?php else: ?>
+                    <p><?php esc_html_e('The plugin has been automatically configured for your theme.', 'read-more-universal'); ?></p>
+                <?php endif; ?>
             </div>
             
             <form method="post">
@@ -736,12 +672,56 @@ class ReadMoreUniversal {
                 <h3><?php esc_html_e('📋 Theme information', 'read-more-universal'); ?></h3>
                 <p><strong><?php esc_html_e('Current theme:', 'read-more-universal'); ?></strong> <?php echo esc_html(wp_get_theme()->get('Name')); ?></p>
                 <p><strong><?php esc_html_e('Template:', 'read-more-universal'); ?></strong> <?php echo esc_html(get_template()); ?></p>
+                <p><strong><?php esc_html_e('Support status:', 'read-more-universal'); ?></strong> 
+                    <?php if ($this->theme_name === 'manual'): ?>
+                        <span style="color: #e74c3c;"><?php esc_html_e('Manual integration required', 'read-more-universal'); ?></span>
+                    <?php elseif (strpos($this->theme_name, 'twenty') !== false): ?>
+                        <span style="color: #27ae60;"><?php esc_html_e('Fully supported (WordPress Twenty theme)', 'read-more-universal'); ?></span>
+                    <?php else: ?>
+                        <span style="color: #f39c12;"><?php esc_html_e('Basic support', 'read-more-universal'); ?></span>
+                    <?php endif; ?>
+                </p>
                 <p><strong><?php esc_html_e('CSS selectors used:', 'read-more-universal'); ?></strong></p>
                 <ul>
                     <?php foreach ($this->theme_selectors as $selector): ?>
                         <li><code><?php echo esc_html($selector); ?></code></li>
                     <?php endforeach; ?>
                 </ul>
+                
+                <?php if ($this->theme_name === 'manual'): ?>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 15px;">
+                        <h4><?php esc_html_e('Integration Instructions', 'read-more-universal'); ?></h4>
+                        <p><?php esc_html_e('To integrate Read More Universal with your theme, add the CSS class', 'read-more-universal'); ?> <code>rmu-content-target</code> <?php esc_html_e('to the element that contains your post content.', 'read-more-universal'); ?></p>
+                        
+                        <h5><?php esc_html_e('Method 1: Theme Files', 'read-more-universal'); ?></h5>
+                        <p><?php esc_html_e('Edit your theme\'s', 'read-more-universal'); ?> <code>single.php</code> <?php esc_html_e('or', 'read-more-universal'); ?> <code>content.php</code> <?php esc_html_e('file and add the class to the content container:', 'read-more-universal'); ?></p>
+                        <pre style="background: #2d3748; color: #e2e8f0; padding: 10px; border-radius: 5px; overflow-x: auto;"><code>&lt;div class="entry-content rmu-content-target"&gt;
+    &lt;?php the_content(); ?&gt;
+&lt;/div&gt;</code></pre>
+                        
+                        <h5><?php esc_html_e('Method 2: CSS', 'read-more-universal'); ?></h5>
+                        <p><?php esc_html_e('If you can\'t modify theme files, add this CSS to your theme\'s', 'read-more-universal'); ?> <code>style.css</code>:</p>
+                        <pre style="background: #2d3748; color: #e2e8f0; padding: 10px; border-radius: 5px; overflow-x: auto;"><code>.entry-content,
+.post-content,
+.content {
+    /* Add any existing styles here */
+}
+
+/* Add the target class */
+.single .entry-content {
+    /* This will be targeted by the plugin */
+}</code></pre>
+                        
+                        <h5><?php esc_html_e('Method 3: JavaScript', 'read-more-universal'); ?></h5>
+                        <p><?php esc_html_e('Add this JavaScript to your theme to automatically add the class:', 'read-more-universal'); ?></p>
+                        <pre style="background: #2d3748; color: #e2e8f0; padding: 10px; border-radius: 5px; overflow-x: auto;"><code>document.addEventListener('DOMContentLoaded', function() {
+    var content = document.querySelector('.entry-content, .post-content, .content');
+    if (content) {
+        content.classList.add('rmu-content-target');
+    }
+});</code></pre>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
         <?php
