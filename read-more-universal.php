@@ -492,73 +492,8 @@ class ReadMoreUniversal {
     }
     
     private function get_default_button_text() {
-        $locale = get_locale();
-        $button_texts = array(
-            'es_ES' => '📖 Leer artículo completo',
-            'es_MX' => '📖 Leer artículo completo',
-            'es_AR' => '📖 Leer artículo completo',
-            'es_CL' => '📖 Leer artículo completo',
-            'es_CO' => '📖 Leer artículo completo',
-            'es_PE' => '📖 Leer artículo completo',
-            'es_VE' => '📖 Leer artículo completo',
-            'ca' => '📖 Llegir article complet',
-            'eu' => '📖 Artikulu osoa irakurri',
-            'gl_ES' => '📖 Ler artigo completo',
-            'fr_FR' => '📖 Lire l\'article complet',
-            'fr_CA' => '📖 Lire l\'article complet',
-            'fr_BE' => '📖 Lire l\'article complet',
-            'de_DE' => '📖 Vollständigen Artikel lesen',
-            'de_AT' => '📖 Vollständigen Artikel lesen',
-            'de_CH' => '📖 Vollständigen Artikel lesen',
-            'it_IT' => '📖 Leggi articolo completo',
-            'pt_PT' => '📖 Ler artigo completo',
-            'pt_BR' => '📖 Ler artigo completo',
-            'nl_NL' => '📖 Volledig artikel lezen',
-            'nl_BE' => '📖 Volledig artikel lezen',
-            'ru_RU' => '📖 Читать полную статью',
-            'uk' => '📖 Читати повну статтю',
-            'pl_PL' => '📖 Przeczytaj cały artykuł',
-            'sv_SE' => '📖 Läs hela artikeln',
-            'da_DK' => '📖 Læs hele artiklen',
-            'no' => '📖 Les hele artikkelen',
-            'fi' => '📖 Lue koko artikkeli',
-            'ro_RO' => '📖 Citește articolul complet',
-            'hu_HU' => '📖 Teljes cikk olvasása',
-            'cs_CZ' => '📖 Přečíst celý článek',
-            'sk_SK' => '📖 Prečítať celý článok',
-            'sl_SI' => '📖 Preberi celoten članek',
-            'hr' => '📖 Pročitaj cijeli članak',
-            'sr_RS' => '📖 Прочитај цео чланак',
-            'bg_BG' => '📖 Прочети цялата статия',
-            'el' => '📖 Διαβάστε ολόκληρο το άρθρο',
-            'tr_TR' => '📖 Tüm makaleyi oku',
-            'ar' => '📖 اقرأ المقال كاملاً',
-            'he_IL' => '📖 קרא את המאמר המלא',
-            'ja' => '📖 記事全文を読む',
-            'ko_KR' => '📖 전체 기사 읽기',
-            'zh_CN' => '📖 阅读完整文章',
-            'zh_TW' => '📖 閱讀完整文章',
-            'hi_IN' => '📖 पूरा लेख पढ़ें',
-            'th' => '📖 อ่านบทความเต็ม',
-            'vi' => '📖 Đọc bài viết đầy đủ',
-            'id_ID' => '📖 Baca artikel lengkap',
-            'ms_MY' => '📖 Baca artikel penuh'
-        );
-        
-        // Try exact locale first, then language code
-        if (isset($button_texts[$locale])) {
-            return $button_texts[$locale];
-        }
-        
-        $lang = substr($locale, 0, 2);
-        foreach ($button_texts as $loc => $text) {
-            if (substr($loc, 0, 2) === $lang) {
-                return $text;
-            }
-        }
-        
-        // Default English
-        return '📖 Read full article';
+        // Default English text - translations will be handled by WordPress i18n
+        return __('📖 Read full article', 'read-more-universal');
     }
 }
 
