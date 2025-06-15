@@ -7,8 +7,6 @@
 
 A universal "Read More" system that automatically adapts to **Twenty Twenty-Five**, **Astra**, **Elementor**, **GeneratePress**, **OceanWP** and other popular WordPress themes. Improve user engagement and page views with a sleek, animated content truncation system.
 
-![Read More Universal Demo](https://via.placeholder.com/800x400/007cba/ffffff?text=Read+More+Universal+Demo)
-
 ## ✨ Features
 
 - 🎯 **Smart Theme Detection** - Automatically configures for 20+ popular themes
