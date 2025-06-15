@@ -53,10 +53,13 @@ class ReadMoreUniversal {
         if (strpos($theme_name, 'astra') !== false || $template === 'astra') {
             $this->theme_name = 'astra';
             $this->theme_selectors = array(
-                '.entry-content',
-                '.ast-article-single .entry-content',
+                '.ast-article-post .entry-content',
                 '.single-post .entry-content',
-                'article .entry-content'
+                '.ast-article-single .entry-content',
+                '.entry-content',
+                'article .entry-content',
+                '.post-content',
+                '.ast-container .entry-content'
             );
         } elseif (strpos($theme_name, 'twenty twenty-five') !== false || $template === 'twentytwentyfive') {
             $this->theme_name = 'twentytwentyfive';
@@ -263,28 +266,43 @@ class ReadMoreUniversal {
                 log('Tema detectado: <?php echo $this->theme_name; ?>');
                 
                 for (var i = 0; i < selectors.length; i++) {
-                    var element = document.querySelector(selectors[i]);
-                    if (element && element.children.length > 0) {
-                        log('Contenido encontrado con selector: ' + selectors[i]);
-                        return element;
+                    var elements = document.querySelectorAll(selectors[i]);
+                    log('Probando selector: ' + selectors[i] + ' - Encontrados: ' + elements.length);
+                    
+                    for (var j = 0; j < elements.length; j++) {
+                        var element = elements[j];
+                        // Verificar que el elemento tenga contenido real y no esté vacío
+                        if (element && element.textContent.trim().length > 50) {
+                            log('Contenido encontrado con selector: ' + selectors[i]);
+                            log('Contenido de texto: ' + element.textContent.length + ' caracteres');
+                            return element;
+                        }
                     }
                 }
                 
                 log('No se encontró contenido con selectores específicos, buscando genérico...');
                 
-                // Búsqueda genérica como respaldo
-                var genericSelectors = [
-                    'article .entry-content',
-                    '.post .entry-content',
-                    '.content .entry-content',
-                    'main .entry-content'
+                // Búsqueda más amplia para Astra
+                var astraSelectors = [
+                    'main .entry-content',
+                    '#main .entry-content', 
+                    '.site-main .entry-content',
+                    '.ast-container .entry-content',
+                    'article.post .entry-content',
+                    '.single article .entry-content',
+                    '[class*="entry-content"]'
                 ];
                 
-                for (var j = 0; j < genericSelectors.length; j++) {
-                    var element = document.querySelector(genericSelectors[j]);
-                    if (element) {
-                        log('Contenido encontrado con selector genérico: ' + genericSelectors[j]);
-                        return element;
+                for (var k = 0; k < astraSelectors.length; k++) {
+                    var elements = document.querySelectorAll(astraSelectors[k]);
+                    log('Probando selector genérico: ' + astraSelectors[k] + ' - Encontrados: ' + elements.length);
+                    
+                    for (var l = 0; l < elements.length; l++) {
+                        var element = elements[l];
+                        if (element && element.textContent.trim().length > 50) {
+                            log('Contenido encontrado con selector genérico: ' + astraSelectors[k]);
+                            return element;
+                        }
                     }
                 }
                 
@@ -299,9 +317,21 @@ class ReadMoreUniversal {
                 
                 if (!postContent) {
                     log('No se pudo inicializar - contenido no encontrado');
+                    // Último intento con delay para Astra
+                    setTimeout(function() {
+                        log('Reintentando búsqueda con delay...');
+                        var delayedContent = findPostContent();
+                        if (delayedContent) {
+                            processContent(delayedContent);
+                        }
+                    }, 1000);
                     return;
                 }
                 
+                processContent(postContent);
+            }
+            
+            function processContent(postContent) {
                 if (postContent.classList.contains('rmu-processed')) {
                     log('Ya procesado anteriormente');
                     return;
@@ -364,10 +394,25 @@ class ReadMoreUniversal {
                 }
             };
             
-            // Múltiples intentos de inicialización
-            document.addEventListener('DOMContentLoaded', initReadMore);
-            setTimeout(initReadMore, 500);
-            window.addEventListener('load', initReadMore);
+            // Múltiples intentos de inicialización para Astra
+            document.addEventListener('DOMContentLoaded', function() {
+                log('DOM cargado, iniciando Read More');
+                initReadMore();
+            });
+            
+            // Específico para Astra - a veces carga contenido dinámicamente
+            setTimeout(function() {
+                initReadMore();
+            }, 500);
+            
+            setTimeout(function() {
+                initReadMore();
+            }, 1500);
+            
+            // Backup - intentar cuando la ventana esté completamente cargada
+            window.addEventListener('load', function() {
+                initReadMore();
+            });
         })();
         </script>
         <?php
