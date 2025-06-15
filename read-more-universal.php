@@ -3,7 +3,7 @@
  * Plugin Name: Read More Universal
  * Plugin URI: https://github.com/dcarrero/read-more-universal
  * Description: Universal "Read More" system that automatically adapts to Twenty Twenty-Five, Astra, Elementor and other popular themes.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: David Carrero Fernández-Baillo
  * Author URI: https://carrero.es
  * License: GPL v2 or later
@@ -49,18 +49,35 @@ class ReadMoreUniversal {
         $theme_name = strtolower($theme->get('Name'));
         $template = get_template();
         
+        // Detectar si Elementor está activo
+        $elementor_active = is_plugin_active('elementor/elementor.php') || defined('ELEMENTOR_VERSION');
+        
         // Detectar tema y configurar selectores específicos
         if (strpos($theme_name, 'astra') !== false || $template === 'astra') {
             $this->theme_name = 'astra';
-            $this->theme_selectors = array(
-                '.ast-article-post .entry-content',
-                '.single-post .entry-content',
-                '.ast-article-single .entry-content',
-                '.entry-content',
-                'article .entry-content',
-                '.post-content',
-                '.ast-container .entry-content'
-            );
+            if ($elementor_active) {
+                $this->theme_name = 'astra-elementor';
+                $this->theme_selectors = array(
+                    '.elementor-widget-theme-post-content .elementor-widget-container',
+                    '.elementor-post-content',
+                    '.elementor-widget-text-editor',
+                    '.elementor-text-editor',
+                    '.elementor .entry-content',
+                    '.ast-article-post .entry-content',
+                    '.entry-content',
+                    'article .entry-content'
+                );
+            } else {
+                $this->theme_selectors = array(
+                    '.ast-article-post .entry-content',
+                    '.single-post .entry-content',
+                    '.ast-article-single .entry-content',
+                    '.entry-content',
+                    'article .entry-content',
+                    '.post-content',
+                    '.ast-container .entry-content'
+                );
+            }
         } elseif (strpos($theme_name, 'twenty twenty-five') !== false || $template === 'twentytwentyfive') {
             $this->theme_name = 'twentytwentyfive';
             $this->theme_selectors = array(
@@ -87,11 +104,15 @@ class ReadMoreUniversal {
                 '.post-content',
                 'article .entry-content'
             );
-        } elseif (strpos($theme_name, 'elementor') !== false || $template === 'hello-elementor') {
+        } elseif (strpos($theme_name, 'elementor') !== false || $template === 'hello-elementor' || $elementor_active) {
             $this->theme_name = 'elementor';
             $this->theme_selectors = array(
+                '.elementor-widget-theme-post-content .elementor-widget-container',
+                '.elementor-post-content',
+                '.elementor-widget-text-editor',
+                '.elementor-text-editor .elementor-widget-container',
+                '.elementor .entry-content',
                 '.entry-content',
-                '.elementor-widget-theme-post-content .entry-content',
                 '.post-content'
             );
         } elseif (strpos($theme_name, 'generatepress') !== false || $template === 'generatepress') {
@@ -107,16 +128,29 @@ class ReadMoreUniversal {
                 '.single-post .entry-content'
             );
         } else {
-            // Tema genérico - usar selectores universales
+            // Tema genérico - usar selectores universales MÁS AMPLIOS
             $this->theme_name = 'generic';
             $this->theme_selectors = array(
+                // Elementor selectors
+                '.elementor-widget-theme-post-content .elementor-widget-container',
+                '.elementor-post-content',
+                '.elementor-widget-text-editor',
+                '.elementor-text-editor',
+                // WordPress selectors
                 '.entry-content',
                 '.post-content',
                 '.wp-block-post-content',
                 'article .entry-content',
                 '.content-area .entry-content',
+                // Generic selectors
+                'main .content',
+                '.main-content',
+                '.post-body',
+                '.article-content',
+                // Fallback selectors
                 '[class*="entry-content"]',
-                '[class*="post-content"]'
+                '[class*="post-content"]',
+                '[class*="content"]'
             );
         }
     }
@@ -265,64 +299,133 @@ class ReadMoreUniversal {
                 log('Buscando contenido del post...');
                 log('Tema detectado: <?php echo $this->theme_name; ?>');
                 
+                // Primera pasada: selectores específicos del tema
                 for (var i = 0; i < selectors.length; i++) {
                     var elements = document.querySelectorAll(selectors[i]);
                     log('Probando selector: ' + selectors[i] + ' - Encontrados: ' + elements.length);
                     
                     for (var j = 0; j < elements.length; j++) {
                         var element = elements[j];
-                        // Verificar que el elemento tenga contenido real y no esté vacío
-                        if (element && element.textContent.trim().length > 50) {
-                            log('Contenido encontrado con selector: ' + selectors[i]);
-                            log('Contenido de texto: ' + element.textContent.length + ' caracteres');
+                        if (isValidContent(element)) {
+                            log('✅ Contenido válido encontrado con: ' + selectors[i]);
                             return element;
                         }
                     }
                 }
                 
-                log('No se encontró contenido con selectores específicos, buscando genérico...');
+                log('🔄 Búsqueda ampliada para Elementor/Page Builders...');
                 
-                // Búsqueda más amplia para Astra
-                var astraSelectors = [
-                    'main .entry-content',
-                    '#main .entry-content', 
-                    '.site-main .entry-content',
-                    '.ast-container .entry-content',
-                    'article.post .entry-content',
-                    '.single article .entry-content',
-                    '[class*="entry-content"]'
+                // Segunda pasada: Selectores específicos para Elementor y page builders
+                var advancedSelectors = [
+                    // Elementor específicos
+                    '.elementor-widget-theme-post-content .elementor-widget-container',
+                    '.elementor-post-content',
+                    '.elementor-widget-text-editor .elementor-widget-container',
+                    '.elementor-text-editor .elementor-widget-container div',
+                    '.elementor .elementor-widget-container p',
+                    '.elementor-section .elementor-widget-container',
+                    
+                    // Gutenberg y WordPress
+                    '.wp-block-post-content p',
+                    '.entry-content > p',
+                    '.post-content > p',
+                    
+                    // Genéricos amplios
+                    'main .content',
+                    '.main-content',
+                    '.post-body',
+                    '.article-content',
+                    '.content-wrapper',
+                    
+                    // Selectores de texto directo
+                    'article p',
+                    '.post p',
+                    'main p',
+                    '.content p'
                 ];
                 
-                for (var k = 0; k < astraSelectors.length; k++) {
-                    var elements = document.querySelectorAll(astraSelectors[k]);
-                    log('Probando selector genérico: ' + astraSelectors[k] + ' - Encontrados: ' + elements.length);
+                for (var k = 0; k < advancedSelectors.length; k++) {
+                    var elements = document.querySelectorAll(advancedSelectors[k]);
+                    log('Probando selector avanzado: ' + advancedSelectors[k] + ' - Encontrados: ' + elements.length);
                     
+                    // Para selectores de párrafos, buscar el contenedor padre
                     for (var l = 0; l < elements.length; l++) {
                         var element = elements[l];
-                        if (element && element.textContent.trim().length > 50) {
-                            log('Contenido encontrado con selector genérico: ' + astraSelectors[k]);
-                            return element;
+                        var container = element.tagName === 'P' ? element.parentElement : element;
+                        
+                        if (isValidContent(container)) {
+                            log('✅ Contenido válido encontrado con selector avanzado: ' + advancedSelectors[k]);
+                            return container;
                         }
                     }
                 }
                 
-                log('No se encontró contenido del post');
+                log('🔍 Última búsqueda: elementos con mucho texto...');
+                
+                // Tercera pasada: buscar cualquier elemento con suficiente texto
+                var allElements = document.querySelectorAll('div, section, article, main');
+                for (var m = 0; m < allElements.length; m++) {
+                    var element = allElements[m];
+                    if (element.textContent.length > 300 && 
+                        !element.classList.contains('rmu-processed') &&
+                        !element.querySelector('.rmu-wrapper')) {
+                        log('✅ Contenido encontrado por longitud de texto: ' + element.tagName + '.' + element.className);
+                        return element;
+                    }
+                }
+                
+                log('❌ No se encontró contenido del post');
                 return null;
+            }
+            
+            function isValidContent(element) {
+                if (!element) return false;
+                
+                var textLength = element.textContent.trim().length;
+                var hasEnoughText = textLength > 100;
+                var notProcessed = !element.classList.contains('rmu-processed');
+                var notWrapper = !element.querySelector('.rmu-wrapper');
+                var notButton = !element.classList.contains('rmu-button-container');
+                var notNavigation = !element.closest('nav, .nav, .navigation, .menu');
+                var notSidebar = !element.closest('aside, .sidebar, .widget');
+                var notFooter = !element.closest('footer');
+                var notHeader = !element.closest('header');
+                
+                var isValid = hasEnoughText && notProcessed && notWrapper && notButton && 
+                             notNavigation && notSidebar && notFooter && notHeader;
+                
+                if (debugMode && textLength > 50) {
+                    log('Validando elemento: ' + element.tagName + '.' + element.className + 
+                        ' - Texto: ' + textLength + ' chars - Válido: ' + isValid);
+                }
+                
+                return isValid;
             }
 
             function initReadMore() {
-                log('Iniciando Read More Universal');
+                log('🚀 Iniciando Read More Universal');
                 
                 var postContent = findPostContent();
                 
                 if (!postContent) {
-                    log('No se pudo inicializar - contenido no encontrado');
-                    // Último intento con delay para Astra
+                    log('⏳ Primera búsqueda falló, esperando carga de Elementor...');
+                    // Para Elementor y page builders que cargan contenido dinámicamente
                     setTimeout(function() {
-                        log('Reintentando búsqueda con delay...');
+                        log('🔄 Segundo intento después de 1s...');
                         var delayedContent = findPostContent();
                         if (delayedContent) {
                             processContent(delayedContent);
+                        } else {
+                            // Último intento después de 3 segundos
+                            setTimeout(function() {
+                                log('🔄 Último intento después de 3s...');
+                                var finalContent = findPostContent();
+                                if (finalContent) {
+                                    processContent(finalContent);
+                                } else {
+                                    log('❌ No se pudo encontrar contenido después de todos los intentos');
+                                }
+                            }, 2000);
                         }
                     }, 1000);
                     return;
@@ -333,11 +436,13 @@ class ReadMoreUniversal {
             
             function processContent(postContent) {
                 if (postContent.classList.contains('rmu-processed')) {
-                    log('Ya procesado anteriormente');
+                    log('⚠️ Ya procesado anteriormente');
                     return;
                 }
                 
-                log('Procesando contenido...');
+                log('⚙️ Procesando contenido...');
+                log('📏 Contenido encontrado: ' + postContent.textContent.length + ' caracteres');
+                
                 postContent.classList.add('rmu-processed');
                 
                 var wrapper = document.createElement('div');
@@ -354,7 +459,23 @@ class ReadMoreUniversal {
                 
                 wrapper.appendChild(buttonContainer);
                 
-                log('Read More Universal aplicado correctamente');
+                log('✅ Read More Universal aplicado correctamente');
+            }
+            
+            // Detectar si Elementor está activo
+            function isElementorActive() {
+                return document.querySelector('.elementor') !== null || 
+                       document.querySelector('[class*="elementor"]') !== null ||
+                       window.elementorFrontend !== undefined;
+            }
+            
+            // Esperar a que Elementor termine de cargar
+            function waitForElementor(callback) {
+                if (window.elementorFrontend) {
+                    window.elementorFrontend.hooks.addAction('frontend/element_ready/global', callback);
+                } else {
+                    callback();
+                }
             }
             
             // Función global para expandir
@@ -394,25 +515,63 @@ class ReadMoreUniversal {
                 }
             };
             
-            // Múltiples intentos de inicialización para Astra
+            // Múltiples estrategias de inicialización
+            log('🎬 Iniciando sistema de detección...');
+            
+            // Estrategia 1: DOM básico cargado
             document.addEventListener('DOMContentLoaded', function() {
-                log('DOM cargado, iniciando Read More');
-                initReadMore();
+                log('📄 DOM cargado');
+                if (isElementorActive()) {
+                    log('🎨 Elementor detectado, esperando...');
+                    waitForElementor(initReadMore);
+                } else {
+                    initReadMore();
+                }
             });
             
-            // Específico para Astra - a veces carga contenido dinámicamente
+            // Estrategia 2: Intentos con delay (para page builders)
             setTimeout(function() {
+                log('⏰ Intento 500ms');
                 initReadMore();
             }, 500);
             
             setTimeout(function() {
+                log('⏰ Intento 1500ms');
                 initReadMore();
             }, 1500);
             
-            // Backup - intentar cuando la ventana esté completamente cargada
-            window.addEventListener('load', function() {
+            setTimeout(function() {
+                log('⏰ Intento 3000ms');
                 initReadMore();
+            }, 3000);
+            
+            // Estrategia 3: Window completamente cargado
+            window.addEventListener('load', function() {
+                log('🏁 Window load completo');
+                setTimeout(initReadMore, 500);
             });
+            
+            // Estrategia 4: Observer para cambios dinámicos (Elementor, etc.)
+            if (window.MutationObserver) {
+                var observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.addedNodes.length > 0) {
+                            // Esperar un poco y luego intentar
+                            setTimeout(initReadMore, 100);
+                        }
+                    });
+                });
+                
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+                
+                // Desactivar observer después de 10 segundos
+                setTimeout(function() {
+                    observer.disconnect();
+                }, 10000);
+            }
         })();
         </script>
         <?php
