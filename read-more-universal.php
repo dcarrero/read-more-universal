@@ -3,7 +3,7 @@
  * Plugin Name: Read More Universal
  * Plugin URI: https://github.com/dcarrero/read-more-universal
  * Description: Universal "Read More" system that automatically adapts to Twenty Twenty-Five, Astra, Elementor and other popular themes.
- * Version: 1.1.1
+ * Version: 1.1.2
  * Author: David Carrero Fernández-Baillo
  * Author URI: https://carrero.es
  * License: GPL v2 or later
@@ -179,58 +179,15 @@ class ReadMoreUniversal {
     }
     
     private function add_astra_specific_functionality() {
+        // Eliminar funcionalidad específica de Astra que causa problemas
+        // El script principal ya debería manejar Astra correctamente
         ?>
-        <script>
-        // Funcionalidad específica para Astra - Solo si no está ya inicializado
-        if (!window.RMU_astra_loaded) {
-            window.RMU_astra_loaded = true;
-            
-            document.addEventListener('DOMContentLoaded', function() {
-                // Solo actuar si el plugin principal no funcionó
-                setTimeout(function() {
-                    if (!document.querySelector('.rmu-wrapper')) {
-                        console.log('🎯 Activando detección específica para Astra');
-                        
-                        var astraContent = document.querySelector('.ast-article-post .entry-content') ||
-                                         document.querySelector('#main .entry-content') ||
-                                         document.querySelector('.ast-container .entry-content');
-                        
-                        if (astraContent && astraContent.textContent.length > 250 && !astraContent.classList.contains('rmu-processed')) {
-                            console.log('✅ Contenido Astra encontrado, procesando...');
-                            if (window.RMU_processSpecificContent) {
-                                window.RMU_processSpecificContent(astraContent);
-                            }
-                        }
-                    }
-                }, 3000); // Esperar más tiempo para Astra
-            });
-            
-            // Función específica para Astra (solo definir si no existe)
-            if (!window.RMU_processSpecificContent) {
-                window.RMU_processSpecificContent = function(element) {
-                    if (element.classList.contains('rmu-processed')) return;
-                    
-                    element.classList.add('rmu-processed');
-                    
-                    var wrapper = document.createElement('div');
-                    wrapper.className = 'rmu-wrapper';
-                    
-                    element.parentNode.insertBefore(wrapper, element);
-                    wrapper.appendChild(element);
-                    
-                    element.classList.add('rmu-content', 'truncated');
-                    
-                    var buttonContainer = document.createElement('div');
-                    buttonContainer.className = 'rmu-button-container';
-                    buttonContainer.innerHTML = '<button class="rmu-button" onclick="RMU_expandContent()"><?php echo esc_js(get_option('rmu_button_text', $this->get_default_button_text())); ?></button>';
-                    
-                    wrapper.appendChild(buttonContainer);
-                    
-                    console.log('✅ Contenido procesado específicamente para Astra');
-                };
-            }
+        <style>
+        /* Asegurar que solo haya un wrapper visible */
+        .rmu-wrapper:not([data-rmu-id="main-content"]) {
+            display: none !important;
         }
-        </script>
+        </style>
         <?php
     }
     
