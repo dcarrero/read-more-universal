@@ -1,0 +1,99 @@
+# German translation for Read More Universal
+# Copyright (C) 2025 David Carrero Fernández-Baillo
+# This file is distributed under the same license as the Read More Universal plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Read More Universal 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/dcarrero/read-more-universal/issues\n"
+"POT-Creation-Date: 2025-01-15 12:00+0000\n"
+"PO-Revision-Date: 2025-01-15 12:00+0100\n"
+"Last-Translator: David Carrero Fernández-Baillo <david@carrero.es>\n"
+"Language-Team: German <de@li.org>\n"
+"Language: de_DE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.0\n"
+
+#: read-more-universal.php:150
+#: read-more-universal.php:151
+msgid "Read More Universal"
+msgstr "Read More Universal"
+
+#: read-more-universal.php:160
+msgid "Settings saved."
+msgstr "Einstellungen gespeichert."
+
+#: read-more-universal.php:172
+msgid "Read More Universal - Settings"
+msgstr "Read More Universal - Einstellungen"
+
+#: read-more-universal.php:175
+#, php-format
+msgid "🎯 Detected theme: %s"
+msgstr "🎯 Erkanntes Theme: %s"
+
+#: read-more-universal.php:176
+msgid "The plugin has been automatically configured for your theme."
+msgstr "Das Plugin wurde automatisch für Ihr Theme konfiguriert."
+
+#: read-more-universal.php:182
+msgid "Minimum characters"
+msgstr "Mindestzeichen"
+
+#: read-more-universal.php:185
+msgid "Minimum number of characters to show the \"Read more\" button"
+msgstr "Mindestanzahl von Zeichen, um die \"Weiterlesen\"-Schaltfläche anzuzeigen"
+
+#: read-more-universal.php:190
+msgid "Max height (px)"
+msgstr "Max. Höhe (px)"
+
+#: read-more-universal.php:193
+msgid "Height in pixels of the truncated content"
+msgstr "Höhe in Pixeln des gekürzten Inhalts"
+
+#: read-more-universal.php:198
+msgid "Button text"
+msgstr "Button-Text"
+
+#: read-more-universal.php:204
+msgid "Button color"
+msgstr "Button-Farbe"
+
+#: read-more-universal.php:210
+msgid "Text color"
+msgstr "Textfarbe"
+
+#: read-more-universal.php:216
+msgid "Border radius (px)"
+msgstr "Rahmenradius (px)"
+
+#: read-more-universal.php:222
+msgid "Debug mode"
+msgstr "Debug-Modus"
+
+#: read-more-universal.php:226
+msgid "Enable debug messages in browser console"
+msgstr "Debug-Nachrichten in der Browser-Konsole aktivieren"
+
+#: read-more-universal.php:235
+msgid "📋 Theme information"
+msgstr "📋 Theme-Informationen"
+
+#: read-more-universal.php:236
+msgid "Current theme:"
+msgstr "Aktuelles Theme:"
+
+#: read-more-universal.php:237
+msgid "Template:"
+msgstr "Vorlage:"
+
+#: read-more-universal.php:238
+msgid "CSS selectors used:"
+msgstr "Verwendete CSS-Selektoren:"
+
+#: read-more-universal.php:248
+msgid "📖 Read full article"
+msgstr "📖 Vollständigen Artikel lesen"
