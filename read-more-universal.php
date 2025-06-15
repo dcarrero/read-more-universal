@@ -3,7 +3,7 @@
  * Plugin Name: Read More Universal
  * Plugin URI: https://github.com/dcarrero/read-more-universal
  * Description: Universal "Read More" system that automatically adapts to Twenty Twenty-Five, Astra, Elementor and other popular themes.
- * Version: 1.0.1
+ * Version: 1.1.0
  * Author: David Carrero Fernández-Baillo
  * Author URI: https://carrero.es
  * License: GPL v2 or later
@@ -162,7 +162,7 @@ class ReadMoreUniversal {
         
         // Verificar longitud del contenido
         $content = get_the_content();
-        $text_content = strip_tags($content);
+        $text_content = wp_strip_all_tags($content);
         $text_length = strlen($text_content);
         
         if ($text_length < $this->min_characters) {
@@ -171,6 +171,66 @@ class ReadMoreUniversal {
         
         $this->output_styles();
         $this->output_script();
+        
+        // Agregar funcionalidad específica para Astra
+        if ($this->theme_name === 'astra' || $this->theme_name === 'astra-elementor') {
+            $this->add_astra_specific_functionality();
+        }
+    }
+    
+    private function add_astra_specific_functionality() {
+        ?>
+        <script>
+        // Funcionalidad específica para Astra
+        document.addEventListener('DOMContentLoaded', function() {
+            // Detectar si es Astra con layout específico
+            var astraContainer = document.querySelector('.ast-container') ||
+                               document.querySelector('.ast-article-post') ||
+                               document.querySelector('#main');
+                               
+            if (astraContainer) {
+                console.log('🎯 Astra container detectado');
+                // Forzar inicialización específica para Astra
+                setTimeout(function() {
+                    if (!document.querySelector('.rmu-wrapper')) {
+                        console.log('🔄 Reintentando inicialización específica para Astra');
+                        var astraContent = document.querySelector('.ast-article-post .entry-content') ||
+                                         document.querySelector('#main .entry-content') ||
+                                         document.querySelector('.ast-container .entry-content');
+                        
+                        if (astraContent && astraContent.textContent.length > 250) {
+                            console.log('✅ Contenido Astra encontrado, procesando...');
+                            window.RMU_processSpecificContent(astraContent);
+                        }
+                    }
+                }, 2000);
+            }
+        });
+        
+        // Función global para procesar contenido específico
+        window.RMU_processSpecificContent = function(element) {
+            if (element.classList.contains('rmu-processed')) return;
+            
+            element.classList.add('rmu-processed');
+            
+            var wrapper = document.createElement('div');
+            wrapper.className = 'rmu-wrapper';
+            
+            element.parentNode.insertBefore(wrapper, element);
+            wrapper.appendChild(element);
+            
+            element.classList.add('rmu-content', 'truncated');
+            
+            var buttonContainer = document.createElement('div');
+            buttonContainer.className = 'rmu-button-container';
+            buttonContainer.innerHTML = '<button class="rmu-button" onclick="RMU_expandContent()"><?php echo esc_js(get_option('rmu_button_text', $this->get_default_button_text())); ?></button>';
+            
+            wrapper.appendChild(buttonContainer);
+            
+            console.log('✅ Contenido procesado específicamente para Astra');
+        };
+        </script>
+        <?php
     }
     
     private function output_styles() {
@@ -182,7 +242,7 @@ class ReadMoreUniversal {
         }
 
         .rmu-content.truncated {
-            max-height: <?php echo get_option('rmu_max_height', '250'); ?>px;
+            max-height: <?php echo esc_attr(get_option('rmu_max_height', '250')); ?>px;
             overflow: hidden;
             position: relative;
         }
@@ -194,7 +254,7 @@ class ReadMoreUniversal {
             left: 0;
             right: 0;
             height: 80px;
-            background: linear-gradient(transparent, <?php echo $theme_colors['background']; ?>);
+            background: linear-gradient(transparent, <?php echo esc_attr($theme_colors['background']); ?>);
             pointer-events: none;
         }
 
@@ -204,11 +264,11 @@ class ReadMoreUniversal {
         }
 
         .rmu-button {
-            background: <?php echo $theme_colors['primary']; ?>;
-            color: <?php echo $theme_colors['text']; ?>;
+            background: <?php echo esc_attr($theme_colors['primary']); ?>;
+            color: <?php echo esc_attr($theme_colors['text']); ?>;
             border: none;
             padding: 1rem 2rem;
-            border-radius: <?php echo get_option('rmu_border_radius', '25'); ?>px;
+            border-radius: <?php echo esc_attr(get_option('rmu_border_radius', '25')); ?>px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
@@ -218,7 +278,7 @@ class ReadMoreUniversal {
         }
 
         .rmu-button:hover {
-            background: <?php echo $theme_colors['secondary']; ?>;
+            background: <?php echo esc_attr($theme_colors['secondary']); ?>;
             transform: translateY(-2px);
         }
 
@@ -284,11 +344,11 @@ class ReadMoreUniversal {
     }
     
     private function output_script() {
-        $selectors_json = json_encode($this->theme_selectors);
+        $selectors_json = wp_json_encode($this->theme_selectors);
         ?>
         <script id="read-more-universal-script">
         (function() {
-            var selectors = <?php echo $selectors_json; ?>;
+            var selectors = <?php echo $selectors_json; // Already escaped by wp_json_encode ?>;
             var debugMode = <?php echo get_option('rmu_debug_mode', 0) ? 'true' : 'false'; ?>;
             
             function log(message) {
@@ -297,7 +357,7 @@ class ReadMoreUniversal {
             
             function findPostContent() {
                 log('Buscando contenido del post...');
-                log('Tema detectado: <?php echo $this->theme_name; ?>');
+                log('Tema detectado: <?php echo esc_js($this->theme_name); ?>');
                 
                 // Primera pasada: selectores específicos del tema
                 for (var i = 0; i < selectors.length; i++) {
@@ -507,7 +567,7 @@ class ReadMoreUniversal {
                     if (typeof fbq !== 'undefined') {
                         fbq('trackCustom', 'ReadMore', {
                             content_type: 'article',
-                            theme: '<?php echo $this->theme_name; ?>'
+                            theme: '<?php echo esc_js($this->theme_name); ?>'
                         });
                     }
                 } else {
@@ -589,25 +649,57 @@ class ReadMoreUniversal {
     }
     
     public function settings_init() {
-        register_setting('rmu_settings', 'rmu_min_characters');
-        register_setting('rmu_settings', 'rmu_max_height');
-        register_setting('rmu_settings', 'rmu_button_text');
-        register_setting('rmu_settings', 'rmu_button_color');
-        register_setting('rmu_settings', 'rmu_text_color');
-        register_setting('rmu_settings', 'rmu_border_radius');
-        register_setting('rmu_settings', 'rmu_debug_mode');
+        register_setting('rmu_settings', 'rmu_min_characters', array(
+            'sanitize_callback' => 'absint',
+            'default' => 250
+        ));
+        register_setting('rmu_settings', 'rmu_max_height', array(
+            'sanitize_callback' => 'absint',
+            'default' => 250
+        ));
+        register_setting('rmu_settings', 'rmu_button_text', array(
+            'sanitize_callback' => 'sanitize_text_field',
+            'default' => $this->get_default_button_text()
+        ));
+        register_setting('rmu_settings', 'rmu_button_color', array(
+            'sanitize_callback' => 'sanitize_hex_color',
+            'default' => '#007cba'
+        ));
+        register_setting('rmu_settings', 'rmu_text_color', array(
+            'sanitize_callback' => 'sanitize_hex_color',
+            'default' => '#ffffff'
+        ));
+        register_setting('rmu_settings', 'rmu_border_radius', array(
+            'sanitize_callback' => 'absint',
+            'default' => 25
+        ));
+        register_setting('rmu_settings', 'rmu_debug_mode', array(
+            'sanitize_callback' => array($this, 'sanitize_checkbox'),
+            'default' => 0
+        ));
+    }
+    
+    public function sanitize_checkbox($input) {
+        return $input ? 1 : 0;
     }
     
     public function admin_page() {
+        // Verify nonce for security
         if (isset($_POST['submit'])) {
-            update_option('rmu_min_characters', intval($_POST['rmu_min_characters']));
-            update_option('rmu_max_height', intval($_POST['rmu_max_height']));
-            update_option('rmu_button_text', sanitize_text_field($_POST['rmu_button_text']));
-            update_option('rmu_button_color', sanitize_hex_color($_POST['rmu_button_color']));
-            update_option('rmu_text_color', sanitize_hex_color($_POST['rmu_text_color']));
-            update_option('rmu_border_radius', intval($_POST['rmu_border_radius']));
-            update_option('rmu_debug_mode', isset($_POST['rmu_debug_mode']) ? 1 : 0);
-            echo '<div class="notice notice-success"><p>' . __('Settings saved.', 'read-more-universal') . '</p></div>';
+            if (!isset($_POST['rmu_settings_nonce']) || !wp_verify_nonce($_POST['rmu_settings_nonce'], 'rmu_settings_action')) {
+                wp_die(__('Security check failed.', 'read-more-universal'));
+            }
+            
+            if (current_user_can('manage_options')) {
+                update_option('rmu_min_characters', isset($_POST['rmu_min_characters']) ? absint($_POST['rmu_min_characters']) : 250);
+                update_option('rmu_max_height', isset($_POST['rmu_max_height']) ? absint($_POST['rmu_max_height']) : 250);
+                update_option('rmu_button_text', isset($_POST['rmu_button_text']) ? sanitize_text_field(wp_unslash($_POST['rmu_button_text'])) : $this->get_default_button_text());
+                update_option('rmu_button_color', isset($_POST['rmu_button_color']) ? sanitize_hex_color(wp_unslash($_POST['rmu_button_color'])) : '#007cba');
+                update_option('rmu_text_color', isset($_POST['rmu_text_color']) ? sanitize_hex_color(wp_unslash($_POST['rmu_text_color'])) : '#ffffff');
+                update_option('rmu_border_radius', isset($_POST['rmu_border_radius']) ? absint($_POST['rmu_border_radius']) : 25);
+                update_option('rmu_debug_mode', isset($_POST['rmu_debug_mode']) ? 1 : 0);
+                echo '<div class="notice notice-success"><p>' . esc_html__('Settings saved.', 'read-more-universal') . '</p></div>';
+            }
         }
         
         $min_chars = get_option('rmu_min_characters', 250);
@@ -619,59 +711,61 @@ class ReadMoreUniversal {
         $debug_mode = get_option('rmu_debug_mode', 0);
         ?>
         <div class="wrap">
-            <h1><?php _e('Read More Universal - Settings', 'read-more-universal'); ?></h1>
+            <h1><?php esc_html_e('Read More Universal - Settings', 'read-more-universal'); ?></h1>
             
             <div style="background: #f1f1f1; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <h3><?php printf(__('🎯 Detected theme: %s', 'read-more-universal'), '<strong>' . ucfirst($this->theme_name) . '</strong>'); ?></h3>
-                <p><?php _e('The plugin has been automatically configured for your theme.', 'read-more-universal'); ?></p>
+                <!-- translators: %s is the theme name -->
+                <h3><?php printf(esc_html__('🎯 Detected theme: %s', 'read-more-universal'), '<strong>' . esc_html(ucfirst($this->theme_name)) . '</strong>'); ?></h3>
+                <p><?php esc_html_e('The plugin has been automatically configured for your theme.', 'read-more-universal'); ?></p>
             </div>
             
             <form method="post">
+                <?php wp_nonce_field('rmu_settings_action', 'rmu_settings_nonce'); ?>
                 <table class="form-table">
                     <tr>
-                        <th><?php _e('Minimum characters', 'read-more-universal'); ?></th>
+                        <th><?php esc_html_e('Minimum characters', 'read-more-universal'); ?></th>
                         <td>
-                            <input type="number" name="rmu_min_characters" value="<?php echo $min_chars; ?>" min="50" max="1000" />
-                            <p class="description"><?php _e('Minimum number of characters to show the "Read more" button', 'read-more-universal'); ?></p>
+                            <input type="number" name="rmu_min_characters" value="<?php echo esc_attr($min_chars); ?>" min="50" max="1000" />
+                            <p class="description"><?php esc_html_e('Minimum number of characters to show the "Read more" button', 'read-more-universal'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th><?php _e('Max height (px)', 'read-more-universal'); ?></th>
+                        <th><?php esc_html_e('Max height (px)', 'read-more-universal'); ?></th>
                         <td>
-                            <input type="number" name="rmu_max_height" value="<?php echo $max_height; ?>" min="100" max="500" />
-                            <p class="description"><?php _e('Height in pixels of the truncated content', 'read-more-universal'); ?></p>
+                            <input type="number" name="rmu_max_height" value="<?php echo esc_attr($max_height); ?>" min="100" max="500" />
+                            <p class="description"><?php esc_html_e('Height in pixels of the truncated content', 'read-more-universal'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th><?php _e('Button text', 'read-more-universal'); ?></th>
+                        <th><?php esc_html_e('Button text', 'read-more-universal'); ?></th>
                         <td>
                             <input type="text" name="rmu_button_text" value="<?php echo esc_attr($button_text); ?>" style="width: 300px;" />
                         </td>
                     </tr>
                     <tr>
-                        <th><?php _e('Button color', 'read-more-universal'); ?></th>
+                        <th><?php esc_html_e('Button color', 'read-more-universal'); ?></th>
                         <td>
-                            <input type="color" name="rmu_button_color" value="<?php echo $button_color; ?>" />
+                            <input type="color" name="rmu_button_color" value="<?php echo esc_attr($button_color); ?>" />
                         </td>
                     </tr>
                     <tr>
-                        <th><?php _e('Text color', 'read-more-universal'); ?></th>
+                        <th><?php esc_html_e('Text color', 'read-more-universal'); ?></th>
                         <td>
-                            <input type="color" name="rmu_text_color" value="<?php echo $text_color; ?>" />
+                            <input type="color" name="rmu_text_color" value="<?php echo esc_attr($text_color); ?>" />
                         </td>
                     </tr>
                     <tr>
-                        <th><?php _e('Border radius (px)', 'read-more-universal'); ?></th>
+                        <th><?php esc_html_e('Border radius (px)', 'read-more-universal'); ?></th>
                         <td>
-                            <input type="number" name="rmu_border_radius" value="<?php echo $border_radius; ?>" min="0" max="50" />
+                            <input type="number" name="rmu_border_radius" value="<?php echo esc_attr($border_radius); ?>" min="0" max="50" />
                         </td>
                     </tr>
                     <tr>
-                        <th><?php _e('Debug mode', 'read-more-universal'); ?></th>
+                        <th><?php esc_html_e('Debug mode', 'read-more-universal'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="rmu_debug_mode" value="1" <?php checked($debug_mode, 1); ?> />
-                                <?php _e('Enable debug messages in browser console', 'read-more-universal'); ?>
+                                <?php esc_html_e('Enable debug messages in browser console', 'read-more-universal'); ?>
                             </label>
                         </td>
                     </tr>
@@ -681,10 +775,10 @@ class ReadMoreUniversal {
             </form>
             
             <div style="background: #fff; padding: 20px; border: 1px solid #ccc; margin-top: 30px;">
-                <h3><?php _e('📋 Theme information', 'read-more-universal'); ?></h3>
-                <p><strong><?php _e('Current theme:', 'read-more-universal'); ?></strong> <?php echo wp_get_theme()->get('Name'); ?></p>
-                <p><strong><?php _e('Template:', 'read-more-universal'); ?></strong> <?php echo get_template(); ?></p>
-                <p><strong><?php _e('CSS selectors used:', 'read-more-universal'); ?></strong></p>
+                <h3><?php esc_html_e('📋 Theme information', 'read-more-universal'); ?></h3>
+                <p><strong><?php esc_html_e('Current theme:', 'read-more-universal'); ?></strong> <?php echo esc_html(wp_get_theme()->get('Name')); ?></p>
+                <p><strong><?php esc_html_e('Template:', 'read-more-universal'); ?></strong> <?php echo esc_html(get_template()); ?></p>
+                <p><strong><?php esc_html_e('CSS selectors used:', 'read-more-universal'); ?></strong></p>
                 <ul>
                     <?php foreach ($this->theme_selectors as $selector): ?>
                         <li><code><?php echo esc_html($selector); ?></code></li>
