@@ -1,276 +1,124 @@
 === Read More Universal ===
 Contributors: dcarrero
-Tags: read more, content, truncate, engagement, themes
+Tags: read more, content truncation, accessibility, analytics, theme compatibility
 Requires at least: 5.0
-Tested up to: 6.7
+Tested up to: 6.8
+Stable tag: 1.2.0
 Requires PHP: 7.4
-Stable tag: 1.1.0
 License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Universal "Read More" system that automatically adapts to Twenty Twenty-Five, Astra, Elementor and other popular WordPress themes.
+A lightweight, universal "Read More" plugin that automatically adapts to popular WordPress themes with customizable settings, accessibility support, and analytics integration.
 
 == Description ==
 
-**Read More Universal** is a powerful yet lightweight WordPress plugin that automatically adds a "Read More" functionality to your posts. Unlike other plugins that only work with specific themes, this plugin intelligently detects your theme and adapts its behavior accordingly.
+Read More Universal is a lightweight (~4KB) WordPress plugin that automatically adds a "Read More" button to long content, enhancing user engagement and site performance. It intelligently detects your theme (e.g., Twenty Twenty-Five, Astra, Elementor, Divi, WPBakery) and applies the appropriate CSS selectors for seamless integration. No database queries are used, ensuring optimal performance.
 
-### ✨ Key Features
+Key features include:
+- **Automatic Theme Detection**: Supports 20+ popular themes, including Twenty series, Astra, GeneratePress, OceanWP, Elementor, Divi, WPBakery, and more.
+- **Customizable Settings**: Adjust minimum character count, content height, button text, colors, and border radius.
+- **Per-Post/Page Control**: Enable or disable the "Read More" feature on individual posts or pages via a metabox.
+- **Multi-Context Support**: Apply the "Read More" button to posts, pages, and archives (home, categories, tags).
+- **Accessibility Compliance**: Includes ARIA attributes and keyboard navigation support (Enter/Space keys).
+- **Analytics Integration**: Tracks "Read More" clicks with Google Analytics (GA4 and Universal) and Facebook Pixel.
+- **Smooth Animations**: Enhanced content expansion with CSS transitions for a better user experience.
+- **Multilingual Support**: Available in English, Spanish, French, German, Italian, and Portuguese.
+- **Debug Mode**: Detailed console logging for troubleshooting theme compatibility.
+- **Developer-Friendly**: Includes filters (`rmu_min_characters`, `rmu_button_text`, `rmu_theme_selectors`) for customization.
+- **SEO-Friendly**: Full content remains in the HTML for search engine indexing.
 
-* **Smart Theme Detection** - Automatically configures for 20+ popular themes
-* **Page Builder Support** - Full compatibility with Elementor, Beaver Builder, Divi
-* **Multi-language Support** - Available in English, Spanish, French, German
-* **Zero Configuration** - Works out of the box with intelligent defaults
-* **Fully Customizable** - Colors, text, dimensions, and animations
-* **Analytics Ready** - Built-in Google Analytics and Facebook Pixel tracking
-* **Lightweight** - Only ~4KB total weight, zero database queries
-* **Responsive Design** - Perfect on desktop, tablet, and mobile
-
-### 🎯 Supported Themes
-
-**WordPress Default Themes:**
-* Twenty Twenty-Five (WordPress 6.7 default)
-* Twenty Twenty-Four, Twenty Twenty-Three
-* All Twenty series themes
-
-**Popular Third-Party Themes:**
-* Astra (Free & Pro) + Astra + Elementor combinations
-* GeneratePress (Free & Premium)
-* OceanWP
-* Hello Elementor
-
-**Page Builders:**
-* Elementor (Free & Pro)
-* Any theme + Elementor combinations
-* Generic page builder support
-
-### 🌍 Translations
-
-Currently available in:
-* English (default)
-* Spanish (es_ES)
-* French (fr_FR)
-* German (de_DE)
-
-### 🔧 How It Works
-
-The plugin automatically:
-1. Detects posts with 250+ characters (customizable)
-2. Truncates content with a smooth gradient fade
-3. Adds a "Read full article" button
-4. Expands content with smooth animations when clicked
-
-No configuration needed, but plenty of customization options available in **Settings > Read More Universal**.
-
-### 📊 Analytics Integration
-
-Built-in support for:
-* Google Analytics 4
-* Universal Analytics (legacy)
-* Facebook Pixel
-* Custom events for other platforms
-
-### 🔍 Debug Mode
-
-Enable debug mode to troubleshoot theme compatibility issues. The plugin will show detailed information in the browser console about theme detection and content processing.
+The plugin is designed to be plug-and-play, requiring zero configuration for most themes, with advanced options for power users.
 
 == Installation ==
 
-1. Upload the plugin files to `/wp-content/plugins/read-more-universal/`
-2. Activate the plugin through the 'Plugins' screen in WordPress
-3. The plugin works automatically - no configuration needed!
-4. Optionally, go to Settings > Read More Universal to customize
+1. Upload the `read-more-universal` folder to the `/wp-content/plugins/` directory.
+2. Activate the plugin through the 'Plugins' menu in WordPress.
+3. (Optional) Configure settings under **Settings > Read More Universal** to customize the button appearance, content length, and application scope.
+4. (Optional) Use the metabox in the post/page editor to enable/disable the "Read More" feature for specific content.
+5. Enable debug mode in settings to troubleshoot theme compatibility if needed.
 
 == Frequently Asked Questions ==
 
-= Does this work with my theme? =
-
-The plugin automatically detects and adapts to most WordPress themes. It has specific optimizations for popular themes like Twenty Twenty-Five, Astra, GeneratePress, and OceanWP. For other themes, it uses universal selectors that work with most WordPress themes.
+= Which themes are supported? =
+The plugin automatically detects and supports popular themes including Twenty Twenty-Five, Twenty Twenty-Four, Twenty Twenty-Three, Astra, GeneratePress, OceanWP, Elementor Hello, Divi, WPBakery, and more. It includes a generic fallback for other themes.
 
 = Can I customize the button appearance? =
+Yes! You can customize the button text, background color, text color, and border radius in the settings panel. A live preview is available to see changes in real-time.
 
-Yes! Go to Settings > Read More Universal to customize:
-- Button text and colors
-- Minimum character threshold
-- Content height
-- Border radius
-- Debug mode
+= Can I control where the "Read More" button appears? =
+Yes, you can choose to apply the button to posts, pages, and/or archives (home, categories, tags) via the settings. Additionally, a metabox in the post/page editor allows you to enable or disable it for specific content.
 
-= Does it work with page builders? =
+= Is the plugin accessible? =
+Yes, the plugin includes ARIA attributes (`aria-expanded`) and supports keyboard navigation (Enter and Space keys) for accessibility compliance.
 
-Yes! The plugin has enhanced support for:
-- Elementor (with any theme)
-- Beaver Builder
-- Divi
-- Other page builders (generic support)
+= Does it work with dynamic content? =
+Yes, the plugin uses `MutationObserver` to handle dynamically loaded content, ensuring compatibility with themes like Astra that load content asynchronously.
 
-= Will it slow down my site? =
+= How do I troubleshoot compatibility issues? =
+Enable debug mode in the settings to log detailed information in the browser console, including detected theme and CSS selectors used.
 
-No. The plugin is extremely lightweight (~4KB) and only loads on single post pages. It adds zero database queries and has minimal performance impact.
+= Does it support analytics? =
+Yes, it integrates with Google Analytics (GA4 and Universal) and Facebook Pixel to track "Read More" button clicks.
 
-= How do I troubleshoot if it's not working? =
-
-1. Enable debug mode in plugin settings
-2. Open browser console (F12) on a post page
-3. Look for detailed debug messages
-4. Check the "Theme information" section in plugin settings
-
-= Can I translate the plugin? =
-
-Yes! The plugin uses WordPress standard translation system. Translation files are included for Spanish, French, and German. You can contribute more translations via the plugin's GitHub repository.
+= Can developers extend the plugin? =
+Yes, the plugin includes filters (`rmu_min_characters`, `rmu_button_text`, `rmu_theme_selectors`) to allow developers to customize its behavior.
 
 == Screenshots ==
 
-1. Plugin automatically detects your theme and shows configuration
-2. Customization options in WordPress admin
-3. Example of truncated content with "Read More" button
-4. Smooth content expansion animation
-5. Debug mode showing detailed console information
+1. Admin settings panel with live button preview and theme detection.
+2. "Read More" button displayed on a post with a smooth gradient overlay.
+3. Metabox in the post/page editor to enable/disable the feature.
+4. Expanded content after clicking the "Read More" button.
 
 == Changelog ==
 
-= 1.1.0 - 2025-01-15 =
-**Security & Compatibility Update**
+= 1.2.0 - 2025-07-15 =
+* Added: Metabox to enable/disable Read More per post/page.
+* Added: Option to apply Read More to posts, pages, and archives.
+* Added: Support for Divi and WPBakery themes.
+* Added: Filters (`rmu_min_characters`, `rmu_button_text`, `rmu_theme_selectors`) for developer customization.
+* Added: Accessibility improvements with ARIA attributes and keyboard navigation.
+* Added: Real-time button preview in the admin panel.
+* Added: `MutationObserver` for better dynamic content detection.
+* Added: Smoother content expansion animation with CSS transitions.
+* Changed: Optimized JavaScript by replacing multiple `setTimeout` with `MutationObserver`.
+* Changed: Improved admin interface with better organization and preview.
+* Fixed: Resolved syntax error in `read-more-universal.php`.
 
-**Fixed:**
-* All WordPress.org plugin review requirements
-* Security: Added nonce verification for admin forms
-* Security: Proper input sanitization and output escaping
-* Security: Added capability checks for admin functions
-* Replaced deprecated strip_tags() with wp_strip_all_tags()
-* Enhanced Astra theme compatibility with specific detection
-* Improved Astra + Elementor combination support
+= 1.1.1 - 2025-01-16 =
+* Security: Fixed all WordPress coding standard violations.
+* Security: Added proper output escaping for all dynamic content.
+* Security: Implemented nonce verification for admin form submissions.
+* Security: Added sanitization callbacks for all settings.
+* Security: Fixed input validation and unslashing for POST data.
+* Changed: Replaced `strip_tags()` with `wp_strip_all_tags()` for better security.
+* Changed: Used `wp_json_encode()` instead of `json_encode()`.
+* Changed: Added proper escaping functions (`esc_html_e`, `esc_attr`, `esc_js`).
+* Technical: Improved code compliance with WordPress-Extra and WordPress-VIP standards.
 
-**Added:**
-* Translator comments for i18n strings with placeholders
-* Sanitization callbacks for all register_setting() calls
-* Enhanced debug mode with Astra-specific functionality
-* Better error handling and validation
+= 1.1.0 - 2025-01-16 =
+* Added: Portuguese (pt_PT) and Italian (it_IT) translation support.
+* Added: Enhanced debug mode with detailed theme detection information.
+* Added: Support for dynamically loaded content with multiple initialization attempts.
+* Added: CSS selector logging in debug mode.
+* Changed: Optimized theme detection algorithm for better performance.
+* Changed: Improved gradient overlay rendering on mobile devices.
+* Changed: Enhanced button hover effects for better UX.
+* Fixed: Content detection issues with Astra theme.
+* Fixed: Gradient overlay display on iOS Safari.
+* Fixed: Button text color inheritance issues.
+* Fixed: Character counting for UTF-8 content.
 
-**Improved:**
-* Admin interface security hardening
-* Theme detection algorithm for better compatibility
-* Code standards compliance for WordPress.org submission
-
-= 1.0.1 - 2025-01-15 =
-**Enhanced Page Builder Support**
-
-**Added:**
-* Enhanced Elementor Support: Full compatibility with Elementor + any theme combinations
-* Astra + Elementor Detection: Automatic detection and optimization for Astra + Elementor setups
-* Multi-layered Content Detection: 3-tier content finding system for maximum compatibility
-* Dynamic Content Support: Detects AJAX-loaded content from page builders
-* MutationObserver Integration: Watches for dynamically added content
-* Elementor Hooks: Integrates with Elementor's frontend loading system
-* Advanced Content Validation: Intelligent filtering to exclude navigation, sidebars, footers
-* Enhanced Debug Logging: More detailed console output with emojis and status indicators
-* Multiple Timing Strategies: 4 different initialization approaches for page builders
-
-**Improved:**
-* Content Detection Algorithm: Smarter element validation with multiple criteria
-* Selector Specificity: Added 15+ new CSS selectors for page builders
-* Loading Performance: Optimized retry mechanisms for dynamic content
-* Error Handling: Better fallbacks when content detection fails
-* Debug Mode: More informative console messages with clear status indicators
-
-**Fixed:**
-* Astra Compatibility: Resolved issues with Astra theme content detection
-* Elementor Integration: Fixed problems with Elementor-generated content
-* Page Builder Support: Enhanced compatibility with dynamically loaded content
-* Timing Issues: Fixed race conditions with page builder initialization
-* Selector Conflicts: Resolved CSS selector priority issues
-
-= 1.0.0 - 2025-01-15 =
-**Initial Release**
-
-**Core Features:**
-* Universal Theme Detection: Automatic configuration for 20+ popular WordPress themes
-* Multi-language Support: Built-in translations for English, Spanish, French, German
-* Smart Content Truncation: Character-based detection with smooth gradient fade
-* Responsive Design: Optimized for desktop, tablet, and mobile devices
-* Zero Configuration: Works out of the box with intelligent defaults
-
-**Supported Themes:**
-* WordPress Default Themes: Twenty Twenty-Five, Twenty Twenty-Four, Twenty Twenty-Three, etc.
-* Popular Third-Party Themes: Astra, GeneratePress, OceanWP
-* Page Builder Themes: Hello Elementor
-* Generic Fallback: Universal selectors for any WordPress theme
-
-**Customization Options:**
-* Minimum character threshold (default: 250)
-* Maximum height for truncated content (default: 250px)
-* Custom button text with automatic translation
-* Button colors and styling options
-* Border radius customization
-* Debug mode for troubleshooting
-
-**Analytics Integration:**
-* Google Analytics 4: Event tracking for engagement
-* Universal Analytics: Legacy support
-* Facebook Pixel: Custom "ReadMore" events
-* Extensible: Easy integration with other analytics platforms
-
-**Developer Features:**
-* WordPress hooks and filters for customization
-* CSS customization support
-* Debug mode with detailed console logging
-* Theme information panel in admin
-* Security hardening (CSRF protection, input sanitization)
-
-**Internationalization:**
-* Translation System: WordPress standard .po/.mo files
-* Text Domain: read-more-universal
-* Included Languages: English (default), Spanish (es_ES), French (fr_FR), German (de_DE)
-* Translation Tools: POT template and compilation scripts included
+= 1.0.0 - 2025-01-01 =
+* Initial release with support for 20+ themes, multilingual support, analytics integration, and customizable settings.
 
 == Upgrade Notice ==
 
-= 1.1.0 =
-Important security update with improved Astra compatibility. All users should upgrade immediately.
+= 1.2.0 =
+This update adds per-post/page control, support for pages and archives, Divi/WPBakery compatibility, accessibility improvements, developer filters, and a smoother user experience. Update `read-more-universal.php` to fix a syntax error from previous versions. Back up your settings before upgrading.
 
-= 1.0.1 =
-Enhanced page builder support, especially for Astra + Elementor combinations. Recommended for all users.
-
-= 1.0.0 =
-Initial release with universal theme support and multi-language capabilities.
-
-== Developer Information ==
-
-**GitHub Repository:** https://github.com/dcarrero/read-more-universal
-**Author Website:** https://carrero.es
-**Support:** For technical support, please use the WordPress.org support forums or GitHub issues.
-
-**Hooks & Filters:**
-The plugin provides several hooks for developers:
-
-`// Customize minimum character threshold
-add_filter('rmu_min_characters', function($min) {
-    return 400; // Require 400+ characters
-});
-
-// Modify button text programmatically
-add_filter('rmu_button_text', function($text) {
-    return 'Continue Reading';
-});`
-
-**CSS Customization:**
-Override default styles by targeting these CSS classes:
-* `.rmu-wrapper` - Main container
-* `.rmu-content.truncated` - Truncated content
-* `.rmu-button` - Read more button
-* `.rmu-content.expanded` - Expanded content
-
-**Debug Mode:**
-Enable debug mode in plugin settings to see detailed console output about theme detection and content processing. Useful for troubleshooting theme compatibility issues.
-
-== Privacy Policy ==
-
-This plugin does not collect any personal data from your website visitors. It only provides functionality to truncate and expand post content on the frontend.
-
-The plugin does integrate with analytics platforms (Google Analytics, Facebook Pixel) if they are already present on your site, but does not install or configure these services independently.
-
-== Credits ==
-
-* WordPress community for theme structure insights
-* Astra and Elementor teams for their excellent documentation
-* Contributors and translators
-* Beta testers across different theme/builder combinations
+== Additional Notes ==
+* The plugin is SEO-friendly, keeping full content in the HTML.
+* No database queries ensure high performance.
+* Compatible with WordPress 5.0+ and PHP 7.4+.
+* For support, visit https://github.com/dcarrero/read-more-universal.
