@@ -2,19 +2,19 @@
 /**
  * Plugin Name: Read More Universal
  * Plugin URI: https://github.com/dcarrero/read-more-universal
- * Description: Universal "Read More" system optimized for WordPress Twenty themes with manual integration for other themes.
- * Version: 2.0.0
+ * Description: Universal "Read More" system that automatically adapts to Twenty Twenty-Five, Astra, Elementor and other popular themes.
+ * Version: 1.2.0
  * Author: David Carrero Fernández-Baillo
  * Author URI: https://carrero.es
  * License: GPL v2 or later
  * Text Domain: read-more-universal
  * Domain Path: /languages
  * Requires at least: 5.0
- * Tested up to: 6.7
+ * Tested up to: 6.8
  * Requires PHP: 7.4
  */
 
-// Prevenir acceso directo
+// Prevent direct access
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -30,6 +30,8 @@ class ReadMoreUniversal {
         add_action('wp_footer', array($this, 'add_read_more_functionality'));
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_init', array($this, 'settings_init'));
+        add_action('add_meta_boxes', array($this, 'add_meta_box'));
+        add_action('save_post', array($this, 'save_meta_box'));
         add_action('plugins_loaded', array($this, 'load_textdomain'));
     }
     
@@ -38,10 +40,11 @@ class ReadMoreUniversal {
     }
     
     public function init() {
-        // Detectar tema actual
+        // Detect current theme
         $this->detect_theme();
-        // Cargar configuración
-        $this->min_characters = get_option('rmu_min_characters', 250);
+        // Load configuration
+        $this->min_characters = apply_filters('rmu_min_characters', get_option('rmu_min_characters', 250));
+        $this->theme_selectors = apply_filters('rmu_theme_selectors', $this->theme_selectors, $this->theme_name);
     }
     
     private function detect_theme() {
@@ -49,59 +52,108 @@ class ReadMoreUniversal {
         $theme_name = strtolower($theme->get('Name'));
         $template = get_template();
         
-        // Detectar solo temas Twenty de WordPress
-        if (strpos($theme_name, 'twenty twenty-five') !== false || $template === 'twentytwentyfive') {
+        // Detect theme and configure specific selectors
+        if (strpos($theme_name, 'astra') !== false || $template === 'astra') {
+            $this->theme_name = 'astra';
+            $this->theme_selectors = array(
+                '.ast-article-post .entry-content',
+                '.single-post .entry-content',
+                '.ast-article-single .entry-content',
+                '.entry-content',
+                'article .entry-content',
+                '.post-content',
+                '.ast-container .entry-content'
+            );
+        } elseif (strpos($theme_name, 'twenty twenty-five') !== false || $template === 'twentytwentyfive') {
             $this->theme_name = 'twentytwentyfive';
             $this->theme_selectors = array(
-                '.wp-block-post-content'
+                '.wp-block-post-content',
+                '.entry-content',
+                '.post-content'
             );
         } elseif (strpos($theme_name, 'twenty twenty-four') !== false || $template === 'twentytwentyfour') {
             $this->theme_name = 'twentytwentyfour';
             $this->theme_selectors = array(
-                '.wp-block-post-content'
+                '.wp-block-post-content',
+                '.entry-content'
             );
         } elseif (strpos($theme_name, 'twenty twenty-three') !== false || $template === 'twentytwentythree') {
             $this->theme_name = 'twentytwentythree';
             $this->theme_selectors = array(
-                '.wp-block-post-content'
-            );
-        } elseif (strpos($theme_name, 'twenty twenty-two') !== false || $template === 'twentytwentytwo') {
-            $this->theme_name = 'twentytwentytwo';
-            $this->theme_selectors = array(
-                '.wp-block-post-content'
-            );
-        } elseif (strpos($theme_name, 'twenty twenty-one') !== false || $template === 'twentytwentyone') {
-            $this->theme_name = 'twentytwentyone';
-            $this->theme_selectors = array(
-                '.entry-content'
-            );
-        } elseif (strpos($theme_name, 'twenty twenty') !== false || $template === 'twentytwenty') {
-            $this->theme_name = 'twentytwenty';
-            $this->theme_selectors = array(
+                '.wp-block-post-content',
                 '.entry-content'
             );
         } elseif (strpos($theme_name, 'twenty') !== false) {
-            // Otros temas Twenty
-            $this->theme_name = 'twenty-other';
+            $this->theme_name = 'twenty-default';
             $this->theme_selectors = array(
                 '.entry-content',
+                '.post-content',
+                'article .entry-content'
+            );
+        } elseif (strpos($theme_name, 'elementor') !== false || $template === 'hello-elementor') {
+            $this->theme_name = 'elementor';
+            $this->theme_selectors = array(
+                '.entry-content',
+                '.elementor-widget-theme-post-content .entry-content',
                 '.post-content'
             );
-        } else {
-            // Tema no soportado automáticamente
-            $this->theme_name = 'manual';
+        } elseif (strpos($theme_name, 'generatepress') !== false || $template === 'generatepress') {
+            $this->theme_name = 'generatepress';
             $this->theme_selectors = array(
-                '.rmu-content-target' // Clase especial para integración manual
+                '.entry-content',
+                'article .entry-content'
+            );
+        } elseif (strpos($theme_name, 'oceanwp') !== false || $template === 'oceanwp') {
+            $this->theme_name = 'oceanwp';
+            $this->theme_selectors = array(
+                '.entry-content',
+                '.single-post .entry-content'
+            );
+        } elseif (strpos($theme_name, 'divi') !== false || $template === 'divi') {
+            $this->theme_name = 'divi';
+            $this->theme_selectors = array(
+                '.et_pb_post_content',
+                '.entry-content',
+                '.et_pb_text_inner'
+            );
+        } elseif (strpos($theme_name, 'wpbakery') !== false || $template === 'wpbakery') {
+            $this->theme_name = 'wpbakery';
+            $this->theme_selectors = array(
+                '.wpb_text_column',
+                '.entry-content',
+                '.vc_column-inner'
+            );
+        } else {
+            // Generic theme - use universal selectors
+            $this->theme_name = 'generic';
+            $this->theme_selectors = array(
+                '.entry-content',
+                '.post-content',
+                '.wp-block-post-content',
+                'article .entry-content',
+                '.content-area .entry-content',
+                '[class*="entry-content"]',
+                '[class*="post-content"]'
             );
         }
     }
     
     public function add_read_more_functionality() {
-        if (!is_single()) return;
-        
+        $apply_to = get_option('rmu_apply_to', array('post'));
+        $is_applicable = (
+            (in_array('post', $apply_to) && is_single()) ||
+            (in_array('page', $apply_to) && is_page()) ||
+            (in_array('archive', $apply_to) && (is_archive() || is_home()))
+        );
+
+        if (!$is_applicable) return;
+
         global $post;
+        if ((is_single() || is_page()) && $post) {
+            $enabled = get_post_meta($post->ID, '_rmu_enabled', true);
+            if ($enabled === '0') return; // Explicitly disabled
+        }
         
-        // Verificar longitud del contenido
         $content = get_the_content();
         $text_content = wp_strip_all_tags($content);
         $text_length = strlen($text_content);
@@ -112,11 +164,6 @@ class ReadMoreUniversal {
         
         $this->output_styles();
         $this->output_script();
-    }
-    
-    private function add_astra_specific_functionality() {
-        // Función eliminada - Plugin v2.0.0 enfocado en temas Twenty
-        // Para otros temas, usar integración manual con clase .rmu-content-target
     }
     
     private function output_styles() {
@@ -131,6 +178,7 @@ class ReadMoreUniversal {
             max-height: <?php echo esc_attr(get_option('rmu_max_height', '250')); ?>px;
             overflow: hidden;
             position: relative;
+            transition: max-height 0.5s ease-in-out;
         }
 
         .rmu-content.truncated::after {
@@ -169,7 +217,7 @@ class ReadMoreUniversal {
         }
 
         .rmu-content.expanded {
-            max-height: none !important;
+            max-height: 10000px !important;
             overflow: visible !important;
         }
 
@@ -193,7 +241,7 @@ class ReadMoreUniversal {
             }
         }
 
-        /* Específico para cada tema */
+        /* Theme specific */
         <?php if ($this->theme_name === 'astra'): ?>
         .ast-article-single .rmu-wrapper,
         .ast-separate-container .rmu-wrapper {
@@ -201,6 +249,14 @@ class ReadMoreUniversal {
         }
         <?php elseif ($this->theme_name === 'elementor'): ?>
         .elementor-widget-theme-post-content .rmu-wrapper {
+            margin-bottom: 1.5em;
+        }
+        <?php elseif ($this->theme_name === 'divi'): ?>
+        .et_pb_post_content .rmu-wrapper {
+            margin-bottom: 1.5em;
+        }
+        <?php elseif ($this->theme_name === 'wpbakery'): ?>
+        .wpb_text_column .rmu-wrapper {
             margin-bottom: 1.5em;
         }
         <?php endif; ?>
@@ -216,13 +272,13 @@ class ReadMoreUniversal {
             'background' => '#ffffff'
         );
         
-        // Intentar obtener colores del tema
+        // Try to get theme colors
         if ($this->theme_name === 'astra' && function_exists('astra_get_option')) {
             $primary = astra_get_option('theme-color');
             if ($primary) $defaults['primary'] = $primary;
         }
         
-        // Permitir personalización desde configuración
+        // Allow customization from settings
         $defaults['primary'] = get_option('rmu_button_color', $defaults['primary']);
         $defaults['text'] = get_option('rmu_text_color', $defaults['text']);
         
@@ -234,7 +290,7 @@ class ReadMoreUniversal {
         ?>
         <script id="read-more-universal-script">
         (function() {
-            var selectors = <?php echo $selectors_json; // Already escaped by wp_json_encode ?>;
+            var selectors = <?php echo $selectors_json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;
             var debugMode = <?php echo get_option('rmu_debug_mode', 0) ? 'true' : 'false'; ?>;
             
             function log(message) {
@@ -242,153 +298,61 @@ class ReadMoreUniversal {
             }
             
             function findPostContent() {
-                log('Buscando contenido del post...');
-                log('Tema detectado: <?php echo esc_js($this->theme_name); ?>');
+                log('Searching for post content...');
+                log('Detected theme: <?php echo esc_js($this->theme_name); ?>');
                 
-                // Primera pasada: selectores específicos del tema
                 for (var i = 0; i < selectors.length; i++) {
                     var elements = document.querySelectorAll(selectors[i]);
-                    log('Probando selector: ' + selectors[i] + ' - Encontrados: ' + elements.length);
+                    log('Trying selector: ' + selectors[i] + ' - Found: ' + elements.length);
                     
                     for (var j = 0; j < elements.length; j++) {
                         var element = elements[j];
-                        if (isValidContent(element)) {
-                            log('✅ Contenido válido encontrado con: ' + selectors[i]);
+                        // Verify element has real content and is not empty
+                        if (element && element.textContent.trim().length > 50) {
+                            log('Content found with selector: ' + selectors[i]);
+                            log('Text content: ' + element.textContent.length + ' characters');
                             return element;
                         }
                     }
                 }
                 
-                log('🔄 Búsqueda ampliada para Elementor/Page Builders...');
+                log('No content found with specific selectors, searching generic...');
                 
-                // Segunda pasada: Selectores específicos para Elementor y page builders
-                var advancedSelectors = [
-                    // Elementor específicos
-                    '.elementor-widget-theme-post-content .elementor-widget-container',
-                    '.elementor-post-content',
-                    '.elementor-widget-text-editor .elementor-widget-container',
-                    '.elementor-text-editor .elementor-widget-container div',
-                    '.elementor .elementor-widget-container p',
-                    '.elementor-section .elementor-widget-container',
-                    
-                    // Gutenberg y WordPress
-                    '.wp-block-post-content p',
-                    '.entry-content > p',
-                    '.post-content > p',
-                    
-                    // Genéricos amplios
-                    'main .content',
-                    '.main-content',
-                    '.post-body',
-                    '.article-content',
-                    '.content-wrapper',
-                    
-                    // Selectores de texto directo
-                    'article p',
-                    '.post p',
-                    'main p',
-                    '.content p'
+                // Broader search for generic themes
+                var genericSelectors = [
+                    'main .entry-content',
+                    '#main .entry-content', 
+                    '.site-main .entry-content',
+                    '.ast-container .entry-content',
+                    'article.post .entry-content',
+                    '.single article .entry-content',
+                    '[class*="entry-content"]'
                 ];
                 
-                for (var k = 0; k < advancedSelectors.length; k++) {
-                    var elements = document.querySelectorAll(advancedSelectors[k]);
-                    log('Probando selector avanzado: ' + advancedSelectors[k] + ' - Encontrados: ' + elements.length);
+                for (var k = 0; k < genericSelectors.length; k++) {
+                    var elements = document.querySelectorAll(genericSelectors[k]);
+                    log('Trying generic selector: ' + genericSelectors[k] + ' - Found: ' + elements.length);
                     
-                    // Para selectores de párrafos, buscar el contenedor padre
                     for (var l = 0; l < elements.length; l++) {
                         var element = elements[l];
-                        var container = element.tagName === 'P' ? element.parentElement : element;
-                        
-                        if (isValidContent(container)) {
-                            log('✅ Contenido válido encontrado con selector avanzado: ' + advancedSelectors[k]);
-                            return container;
+                        if (element && element.textContent.trim().length > 50) {
+                            log('Content found with generic selector: ' + genericSelectors[k]);
+                            return element;
                         }
                     }
                 }
                 
-                log('🔍 Última búsqueda: elementos con mucho texto...');
-                
-                // Tercera pasada: buscar cualquier elemento con suficiente texto
-                var allElements = document.querySelectorAll('div, section, article, main');
-                for (var m = 0; m < allElements.length; m++) {
-                    var element = allElements[m];
-                    if (element.textContent.length > 300 && 
-                        !element.classList.contains('rmu-processed') &&
-                        !element.querySelector('.rmu-wrapper')) {
-                        log('✅ Contenido encontrado por longitud de texto: ' + element.tagName + '.' + element.className);
-                        return element;
-                    }
-                }
-                
-                log('❌ No se encontró contenido del post');
+                log('Post content not found');
                 return null;
             }
-            
-            function isValidContent(element) {
-                if (!element) return false;
-                
-                var textLength = element.textContent.trim().length;
-                var hasEnoughText = textLength > 100;
-                var notProcessed = !element.classList.contains('rmu-processed');
-                var notWrapper = !element.querySelector('.rmu-wrapper');
-                var notButton = !element.classList.contains('rmu-button-container');
-                var notNavigation = !element.closest('nav, .nav, .navigation, .menu');
-                var notSidebar = !element.closest('aside, .sidebar, .widget');
-                var notFooter = !element.closest('footer');
-                var notHeader = !element.closest('header');
-                
-                var isValid = hasEnoughText && notProcessed && notWrapper && notButton && 
-                             notNavigation && notSidebar && notFooter && notHeader;
-                
-                if (debugMode && textLength > 50) {
-                    log('Validando elemento: ' + element.tagName + '.' + element.className + 
-                        ' - Texto: ' + textLength + ' chars - Válido: ' + isValid);
-                }
-                
-                return isValid;
-            }
 
-            function initReadMore() {
-                log('🚀 Iniciando Read More Universal');
-                
-                var postContent = findPostContent();
-                
-                if (!postContent) {
-                    log('⏳ Primera búsqueda falló, esperando carga de Elementor...');
-                    // Para Elementor y page builders que cargan contenido dinámicamente
-                    setTimeout(function() {
-                        log('🔄 Segundo intento después de 1s...');
-                        var delayedContent = findPostContent();
-                        if (delayedContent) {
-                            processContent(delayedContent);
-                        } else {
-                            // Último intento después de 3 segundos
-                            setTimeout(function() {
-                                log('🔄 Último intento después de 3s...');
-                                var finalContent = findPostContent();
-                                if (finalContent) {
-                                    processContent(finalContent);
-                                } else {
-                                    log('❌ No se pudo encontrar contenido después de todos los intentos');
-                                }
-                            }, 2000);
-                        }
-                    }, 1000);
-                    return;
-                }
-                
-                processContent(postContent);
-            }
-            
             function processContent(postContent) {
                 if (postContent.classList.contains('rmu-processed')) {
-                    log('⚠️ Ya procesado anteriormente');
+                    log('Already processed previously');
                     return;
                 }
                 
-                log('⚙️ Procesando contenido...');
-                log('📏 Contenido encontrado: ' + postContent.textContent.length + ' caracteres');
-                
+                log('Processing content...');
                 postContent.classList.add('rmu-processed');
                 
                 var wrapper = document.createElement('div');
@@ -401,41 +365,32 @@ class ReadMoreUniversal {
                 
                 var buttonContainer = document.createElement('div');
                 buttonContainer.className = 'rmu-button-container';
-                buttonContainer.innerHTML = '<button class="rmu-button" onclick="RMU_expandContent()"><?php echo esc_js(get_option('rmu_button_text', $this->get_default_button_text())); ?></button>';
+                buttonContainer.innerHTML = '<button class="rmu-button" aria-expanded="false" onclick="RMU_expandContent()" onkeydown="RMU_handleKeydown(event)"><?php echo esc_js(get_option('rmu_button_text', $this->get_default_button_text())); ?></button>';
                 
                 wrapper.appendChild(buttonContainer);
                 
-                log('✅ Read More Universal aplicado correctamente');
+                log('Read More Universal applied successfully');
             }
             
-            // Detectar si Elementor está activo
-            function isElementorActive() {
-                return document.querySelector('.elementor') !== null || 
-                       document.querySelector('[class*="elementor"]') !== null ||
-                       window.elementorFrontend !== undefined;
-            }
-            
-            // Esperar a que Elementor termine de cargar
-            function waitForElementor(callback) {
-                if (window.elementorFrontend) {
-                    window.elementorFrontend.hooks.addAction('frontend/element_ready/global', callback);
-                } else {
-                    callback();
+            window.RMU_handleKeydown = function(event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    RMU_expandContent();
                 }
-            }
+            };
             
-            // Función global para expandir
             window.RMU_expandContent = function() {
-                log('Expandiendo contenido...');
+                log('Expanding content...');
                 var content = document.querySelector('.rmu-content');
-                var button = document.querySelector('.rmu-button-container');
+                var button = document.querySelector('.rmu-button');
                 
                 if (content && button) {
                     content.classList.remove('truncated');
                     content.classList.add('expanded');
                     button.classList.add('hidden');
+                    button.setAttribute('aria-expanded', 'true');
                     
-                    log('Contenido expandido');
+                    log('Content expanded');
                     
                     // Analytics
                     if (typeof gtag !== 'undefined') {
@@ -457,55 +412,28 @@ class ReadMoreUniversal {
                         });
                     }
                 } else {
-                    log('No se pudo expandir - elementos no encontrados');
+                    log('Could not expand - elements not found');
                 }
             };
             
-            // Múltiples estrategias de inicialización
-            log('🎬 Iniciando sistema de detección...');
-            
-            // Estrategia 1: DOM básico cargado
-            document.addEventListener('DOMContentLoaded', function() {
-                log('📄 DOM cargado');
-                if (isElementorActive()) {
-                    log('🎨 Elementor detectado, esperando...');
-                    waitForElementor(initReadMore);
-                } else {
-                    initReadMore();
+            function initReadMore() {
+                log('Starting Read More Universal');
+                
+                var postContent = findPostContent();
+                
+                if (postContent) {
+                    processContent(postContent);
+                    return;
                 }
-            });
-            
-            // Estrategia 2: Intentos con delay (para page builders)
-            setTimeout(function() {
-                log('⏰ Intento 500ms');
-                initReadMore();
-            }, 500);
-            
-            setTimeout(function() {
-                log('⏰ Intento 1500ms');
-                initReadMore();
-            }, 1500);
-            
-            setTimeout(function() {
-                log('⏰ Intento 3000ms');
-                initReadMore();
-            }, 3000);
-            
-            // Estrategia 3: Window completamente cargado
-            window.addEventListener('load', function() {
-                log('🏁 Window load completo');
-                setTimeout(initReadMore, 500);
-            });
-            
-            // Estrategia 4: Observer para cambios dinámicos (Elementor, etc.)
-            if (window.MutationObserver) {
-                var observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.addedNodes.length > 0) {
-                            // Esperar un poco y luego intentar
-                            setTimeout(initReadMore, 100);
-                        }
-                    });
+                
+                // Use MutationObserver for dynamic content
+                log('Setting up MutationObserver for dynamic content');
+                var observer = new MutationObserver(function(mutations, obs) {
+                    var postContent = findPostContent();
+                    if (postContent) {
+                        processContent(postContent);
+                        obs.disconnect();
+                    }
                 });
                 
                 observer.observe(document.body, {
@@ -513,17 +441,27 @@ class ReadMoreUniversal {
                     subtree: true
                 });
                 
-                // Desactivar observer después de 10 segundos
+                // Fallback: stop observing after 5 seconds
                 setTimeout(function() {
                     observer.disconnect();
-                }, 10000);
+                    log('Stopped MutationObserver - timeout reached');
+                }, 5000);
             }
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                log('DOM loaded, starting Read More');
+                initReadMore();
+            });
+            
+            window.addEventListener('load', function() {
+                initReadMore();
+            });
         })();
         </script>
         <?php
     }
     
-    // Panel de administración
+    // Admin panel
     public function add_admin_menu() {
         add_options_page(
             __('Read More Universal', 'read-more-universal'),
@@ -535,56 +473,109 @@ class ReadMoreUniversal {
     }
     
     public function settings_init() {
+        // Register settings with sanitization callbacks
         register_setting('rmu_settings', 'rmu_min_characters', array(
+            'type' => 'integer',
             'sanitize_callback' => 'absint',
             'default' => 250
         ));
+        
         register_setting('rmu_settings', 'rmu_max_height', array(
+            'type' => 'integer',
             'sanitize_callback' => 'absint',
             'default' => 250
         ));
+        
         register_setting('rmu_settings', 'rmu_button_text', array(
+            'type' => 'string',
             'sanitize_callback' => 'sanitize_text_field',
             'default' => $this->get_default_button_text()
         ));
+        
         register_setting('rmu_settings', 'rmu_button_color', array(
+            'type' => 'string',
             'sanitize_callback' => 'sanitize_hex_color',
             'default' => '#007cba'
         ));
+        
         register_setting('rmu_settings', 'rmu_text_color', array(
+            'type' => 'string',
             'sanitize_callback' => 'sanitize_hex_color',
             'default' => '#ffffff'
         ));
+        
         register_setting('rmu_settings', 'rmu_border_radius', array(
+            'type' => 'integer',
             'sanitize_callback' => 'absint',
             'default' => 25
         ));
+        
         register_setting('rmu_settings', 'rmu_debug_mode', array(
-            'sanitize_callback' => array($this, 'sanitize_checkbox'),
-            'default' => 0
+            'type' => 'boolean',
+            'sanitize_callback' => 'rest_sanitize_boolean',
+            'default' => false
+        ));
+        
+        register_setting('rmu_settings', 'rmu_apply_to', array(
+            'type' => 'array',
+            'sanitize_callback' => array($this, 'sanitize_array'),
+            'default' => array('post')
         ));
     }
     
-    public function sanitize_checkbox($input) {
-        return $input ? 1 : 0;
+    public function sanitize_array($input) {
+        return is_array($input) ? array_map('sanitize_text_field', $input) : array();
+    }
+    
+    public function add_meta_box() {
+        add_meta_box(
+            'rmu_meta_box',
+            __('Read More Universal', 'read-more-universal'),
+            array($this, 'render_meta_box'),
+            array('post', 'page'),
+            'side',
+            'default'
+        );
+    }
+    
+    public function render_meta_box($post) {
+        $enabled = get_post_meta($post->ID, '_rmu_enabled', true);
+        wp_nonce_field('rmu_meta_box', 'rmu_meta_box_nonce');
+        ?>
+        <label>
+            <input type="checkbox" name="rmu_enabled" value="1" <?php checked($enabled, '1'); ?>>
+            <?php esc_html_e('Enable Read More for this post/page', 'read-more-universal'); ?>
+        </label>
+        <p class="description"><?php esc_html_e('Leave unchecked to use global settings', 'read-more-universal'); ?></p>
+        <?php
+    }
+    
+    public function save_meta_box($post_id) {
+        if (!isset($_POST['rmu_meta_box_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['rmu_meta_box_nonce'])), 'rmu_meta_box')) {
+            return;
+        }
+        if (isset($_POST['rmu_enabled'])) {
+            update_post_meta($post_id, '_rmu_enabled', '1');
+        } else {
+            update_post_meta($post_id, '_rmu_enabled', '0');
+        }
     }
     
     public function admin_page() {
-        // Verify nonce for security
-        if (isset($_POST['submit'])) {
-            if (!isset($_POST['rmu_settings_nonce']) || !wp_verify_nonce($_POST['rmu_settings_nonce'], 'rmu_settings_action')) {
-                wp_die(__('Security check failed.', 'read-more-universal'));
-            }
-            
-            if (current_user_can('manage_options')) {
-                update_option('rmu_min_characters', isset($_POST['rmu_min_characters']) ? absint($_POST['rmu_min_characters']) : 250);
-                update_option('rmu_max_height', isset($_POST['rmu_max_height']) ? absint($_POST['rmu_max_height']) : 250);
-                update_option('rmu_button_text', isset($_POST['rmu_button_text']) ? sanitize_text_field(wp_unslash($_POST['rmu_button_text'])) : $this->get_default_button_text());
-                update_option('rmu_button_color', isset($_POST['rmu_button_color']) ? sanitize_hex_color(wp_unslash($_POST['rmu_button_color'])) : '#007cba');
-                update_option('rmu_text_color', isset($_POST['rmu_text_color']) ? sanitize_hex_color(wp_unslash($_POST['rmu_text_color'])) : '#ffffff');
-                update_option('rmu_border_radius', isset($_POST['rmu_border_radius']) ? absint($_POST['rmu_border_radius']) : 25);
+        // Handle form submission with nonce verification
+        if (isset($_POST['submit']) && isset($_POST['rmu_settings_nonce'])) {
+            if (wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['rmu_settings_nonce'])), 'rmu_settings_action')) {
+                update_option('rmu_min_characters', absint($_POST['rmu_min_characters'] ?? 250));
+                update_option('rmu_max_height', absint($_POST['rmu_max_height'] ?? 250));
+                update_option('rmu_button_text', sanitize_text_field(wp_unslash($_POST['rmu_button_text'] ?? '')));
+                update_option('rmu_button_color', sanitize_hex_color(wp_unslash($_POST['rmu_button_color'] ?? '')));
+                update_option('rmu_text_color', sanitize_hex_color(wp_unslash($_POST['rmu_text_color'] ?? '')));
+                update_option('rmu_border_radius', absint($_POST['rmu_border_radius'] ?? 25));
                 update_option('rmu_debug_mode', isset($_POST['rmu_debug_mode']) ? 1 : 0);
+                update_option('rmu_apply_to', $this->sanitize_array($_POST['rmu_apply_to'] ?? array('post')));
                 echo '<div class="notice notice-success"><p>' . esc_html__('Settings saved.', 'read-more-universal') . '</p></div>';
+            } else {
+                echo '<div class="notice notice-error"><p>' . esc_html__('Security check failed. Please try again.', 'read-more-universal') . '</p></div>';
             }
         }
         
@@ -595,63 +586,79 @@ class ReadMoreUniversal {
         $text_color = get_option('rmu_text_color', '#ffffff');
         $border_radius = get_option('rmu_border_radius', 25);
         $debug_mode = get_option('rmu_debug_mode', 0);
+        $apply_to = get_option('rmu_apply_to', array('post'));
         ?>
         <div class="wrap">
             <h1><?php esc_html_e('Read More Universal - Settings', 'read-more-universal'); ?></h1>
             
             <div style="background: #f1f1f1; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <!-- translators: %s is the theme name -->
-                <h3><?php printf(esc_html__('🎯 Detected theme: %s', 'read-more-universal'), '<strong>' . esc_html(ucfirst($this->theme_name)) . '</strong>'); ?></h3>
-                <?php if ($this->theme_name === 'manual'): ?>
-                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 10px 0;">
-                        <p><strong><?php esc_html_e('Manual Integration Required', 'read-more-universal'); ?></strong></p>
-                        <p><?php esc_html_e('Your theme is not automatically supported. Add the class', 'read-more-universal'); ?> <code>rmu-content-target</code> <?php esc_html_e('to your post content container.', 'read-more-universal'); ?></p>
-                        <p><?php esc_html_e('Example:', 'read-more-universal'); ?> <code>&lt;div class="entry-content rmu-content-target"&gt;</code></p>
-                    </div>
-                <?php else: ?>
-                    <p><?php esc_html_e('The plugin has been automatically configured for your theme.', 'read-more-universal'); ?></p>
-                <?php endif; ?>
+                <h3><?php 
+                /* translators: %s: Name of the detected theme */
+                printf(esc_html__('🎯 Detected theme: %s', 'read-more-universal'), '<strong>' . esc_html(ucfirst($this->theme_name)) . '</strong>'); 
+                ?></h3>
+                <p><?php esc_html_e('The plugin has been automatically configured for your theme.', 'read-more-universal'); ?></p>
             </div>
             
             <form method="post">
                 <?php wp_nonce_field('rmu_settings_action', 'rmu_settings_nonce'); ?>
                 <table class="form-table">
                     <tr>
+                        <th><?php esc_html_e('Apply to', 'read-more-universal'); ?></th>
+                        <td>
+                            <?php
+                            $options = array(
+                                'post' => __('Posts', 'read-more-universal'),
+                                'page' => __('Pages', 'read-more-universal'),
+                                'archive' => __('Archives', 'read-more-universal')
+                            );
+                            foreach ($options as $value => $label) {
+                                ?>
+                                <label>
+                                    <input type="checkbox" name="rmu_apply_to[]" value="<?php echo esc_attr($value); ?>" <?php checked(in_array($value, $apply_to)); ?>>
+                                    <?php echo esc_html($label); ?>
+                                </label><br>
+                                <?php
+                            }
+                            ?>
+                            <p class="description"><?php esc_html_e('Select where to apply the Read More functionality', 'read-more-universal'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th><?php esc_html_e('Minimum characters', 'read-more-universal'); ?></th>
                         <td>
-                            <input type="number" name="rmu_min_characters" value="<?php echo esc_attr($min_chars); ?>" min="50" max="1000" />
+                            <input type="number" name="rmu_min_characters" id="rmu_min_characters" value="<?php echo esc_attr($min_chars); ?>" min="50" max="1000" />
                             <p class="description"><?php esc_html_e('Minimum number of characters to show the "Read more" button', 'read-more-universal'); ?></p>
                         </td>
                     </tr>
                     <tr>
                         <th><?php esc_html_e('Max height (px)', 'read-more-universal'); ?></th>
                         <td>
-                            <input type="number" name="rmu_max_height" value="<?php echo esc_attr($max_height); ?>" min="100" max="500" />
+                            <input type="number" name="rmu_max_height" id="rmu_max_height" value="<?php echo esc_attr($max_height); ?>" min="100" max="500" />
                             <p class="description"><?php esc_html_e('Height in pixels of the truncated content', 'read-more-universal'); ?></p>
                         </td>
                     </tr>
                     <tr>
                         <th><?php esc_html_e('Button text', 'read-more-universal'); ?></th>
                         <td>
-                            <input type="text" name="rmu_button_text" value="<?php echo esc_attr($button_text); ?>" style="width: 300px;" />
+                            <input type="text" name="rmu_button_text" id="rmu_button_text" value="<?php echo esc_attr($button_text); ?>" style="width: 300px;" />
                         </td>
                     </tr>
                     <tr>
                         <th><?php esc_html_e('Button color', 'read-more-universal'); ?></th>
                         <td>
-                            <input type="color" name="rmu_button_color" value="<?php echo esc_attr($button_color); ?>" />
+                            <input type="color" name="rmu_button_color" id="rmu_button_color" value="<?php echo esc_attr($button_color); ?>" />
                         </td>
                     </tr>
                     <tr>
                         <th><?php esc_html_e('Text color', 'read-more-universal'); ?></th>
                         <td>
-                            <input type="color" name="rmu_text_color" value="<?php echo esc_attr($text_color); ?>" />
+                            <input type="color" name="rmu_text_color" id="rmu_text_color" value="<?php echo esc_attr($text_color); ?>" />
                         </td>
                     </tr>
                     <tr>
                         <th><?php esc_html_e('Border radius (px)', 'read-more-universal'); ?></th>
                         <td>
-                            <input type="number" name="rmu_border_radius" value="<?php echo esc_attr($border_radius); ?>" min="0" max="50" />
+                            <input type="number" name="rmu_border_radius" id="rmu_border_radius" value="<?php echo esc_attr($border_radius); ?>" min="0" max="50" />
                         </td>
                     </tr>
                     <tr>
@@ -665,6 +672,30 @@ class ReadMoreUniversal {
                     </tr>
                 </table>
                 
+                <div style="margin-top: 20px;">
+                    <h3><?php esc_html_e('Button Preview', 'read-more-universal'); ?></h3>
+                    <button id="rmu_preview_button" style="padding: 1rem 2rem; font-weight: 600; background: <?php echo esc_attr($button_color); ?>; color: <?php echo esc_attr($text_color); ?>; border-radius: <?php echo esc_attr($border_radius); ?>px;"><?php echo esc_html($button_text); ?></button>
+                </div>
+                
+                <script>
+                jQuery(document).ready(function($) {
+                    function updatePreview() {
+                        var buttonColor = $('#rmu_button_color').val();
+                        var textColor = $('#rmu_text_color').val();
+                        var borderRadius = $('#rmu_border_radius').val() + 'px';
+                        var buttonText = $('#rmu_button_text').val();
+
+                        $('#rmu_preview_button').css({
+                            'background-color': buttonColor,
+                            'color': textColor,
+                            'border-radius': borderRadius
+                        }).text(buttonText);
+                    }
+
+                    $('#rmu_button_color, #rmu_text_color, #rmu_border_radius, #rmu_button_text').on('input change', updatePreview);
+                });
+                </script>
+                
                 <?php submit_button(); ?>
             </form>
             
@@ -672,67 +703,22 @@ class ReadMoreUniversal {
                 <h3><?php esc_html_e('📋 Theme information', 'read-more-universal'); ?></h3>
                 <p><strong><?php esc_html_e('Current theme:', 'read-more-universal'); ?></strong> <?php echo esc_html(wp_get_theme()->get('Name')); ?></p>
                 <p><strong><?php esc_html_e('Template:', 'read-more-universal'); ?></strong> <?php echo esc_html(get_template()); ?></p>
-                <p><strong><?php esc_html_e('Support status:', 'read-more-universal'); ?></strong> 
-                    <?php if ($this->theme_name === 'manual'): ?>
-                        <span style="color: #e74c3c;"><?php esc_html_e('Manual integration required', 'read-more-universal'); ?></span>
-                    <?php elseif (strpos($this->theme_name, 'twenty') !== false): ?>
-                        <span style="color: #27ae60;"><?php esc_html_e('Fully supported (WordPress Twenty theme)', 'read-more-universal'); ?></span>
-                    <?php else: ?>
-                        <span style="color: #f39c12;"><?php esc_html_e('Basic support', 'read-more-universal'); ?></span>
-                    <?php endif; ?>
-                </p>
                 <p><strong><?php esc_html_e('CSS selectors used:', 'read-more-universal'); ?></strong></p>
                 <ul>
                     <?php foreach ($this->theme_selectors as $selector): ?>
                         <li><code><?php echo esc_html($selector); ?></code></li>
                     <?php endforeach; ?>
                 </ul>
-                
-                <?php if ($this->theme_name === 'manual'): ?>
-                    <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 15px;">
-                        <h4><?php esc_html_e('Integration Instructions', 'read-more-universal'); ?></h4>
-                        <p><?php esc_html_e('To integrate Read More Universal with your theme, add the CSS class', 'read-more-universal'); ?> <code>rmu-content-target</code> <?php esc_html_e('to the element that contains your post content.', 'read-more-universal'); ?></p>
-                        
-                        <h5><?php esc_html_e('Method 1: Theme Files', 'read-more-universal'); ?></h5>
-                        <p><?php esc_html_e('Edit your theme\'s', 'read-more-universal'); ?> <code>single.php</code> <?php esc_html_e('or', 'read-more-universal'); ?> <code>content.php</code> <?php esc_html_e('file and add the class to the content container:', 'read-more-universal'); ?></p>
-                        <pre style="background: #2d3748; color: #e2e8f0; padding: 10px; border-radius: 5px; overflow-x: auto;"><code>&lt;div class="entry-content rmu-content-target"&gt;
-    &lt;?php the_content(); ?&gt;
-&lt;/div&gt;</code></pre>
-                        
-                        <h5><?php esc_html_e('Method 2: CSS', 'read-more-universal'); ?></h5>
-                        <p><?php esc_html_e('If you can\'t modify theme files, add this CSS to your theme\'s', 'read-more-universal'); ?> <code>style.css</code>:</p>
-                        <pre style="background: #2d3748; color: #e2e8f0; padding: 10px; border-radius: 5px; overflow-x: auto;"><code>.entry-content,
-.post-content,
-.content {
-    /* Add any existing styles here */
-}
-
-/* Add the target class */
-.single .entry-content {
-    /* This will be targeted by the plugin */
-}</code></pre>
-                        
-                        <h5><?php esc_html_e('Method 3: JavaScript', 'read-more-universal'); ?></h5>
-                        <p><?php esc_html_e('Add this JavaScript to your theme to automatically add the class:', 'read-more-universal'); ?></p>
-                        <pre style="background: #2d3748; color: #e2e8f0; padding: 10px; border-radius: 5px; overflow-x: auto;"><code>document.addEventListener('DOMContentLoaded', function() {
-    var content = document.querySelector('.entry-content, .post-content, .content');
-    if (content) {
-        content.classList.add('rmu-content-target');
-    }
-});</code></pre>
-                    </div>
-                <?php endif; ?>
             </div>
         </div>
         <?php
     }
     
     private function get_default_button_text() {
-        // Default English text - translations will be handled by WordPress i18n
-        return __('📖 Read full article', 'read-more-universal');
+        return apply_filters('rmu_button_text', __('📖 Read full article', 'read-more-universal'));
     }
 }
 
-// Inicializar el plugin
+// Initialize the plugin
 new ReadMoreUniversal();
 ?>
