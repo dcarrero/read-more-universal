@@ -3,12 +3,12 @@ Contributors: dcarrero
 Tags: read more, content truncation, accessibility, analytics, theme compatibility
 Requires at least: 5.0
 Tested up to: 6.8
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A lightweight, universal "Read More" plugin that automatically adapts to popular WordPress themes with customizable settings, accessibility support, and analytics integration.
+Lightweight "Read More" plugin with theme detection, customizable settings, accessibility, and analytics.
 
 == Description ==
 
@@ -72,13 +72,17 @@ Yes, the plugin includes filters (`rmu_min_characters`, `rmu_button_text`, `rmu_
 
 == Changelog ==
 
+= 1.2.1 - 2025-07-15 =
+* Fixed: Resolved security warnings for `$_POST['rmu_apply_to']` by adding `wp_unslash()` and explicit sanitization.
+* Fixed: Improved sanitization in `sanitize_array()` to include `wp_unslash()`.
+
 = 1.2.0 - 2025-07-15 =
 * Added: Metabox to enable/disable Read More per post/page.
 * Added: Option to apply Read More to posts, pages, and archives.
 * Added: Support for Divi and WPBakery themes.
 * Added: Filters (`rmu_min_characters`, `rmu_button_text`, `rmu_theme_selectors`) for developer customization.
 * Added: Accessibility improvements with ARIA attributes and keyboard navigation.
-* Added: Real-time button preview in the admin panel.
+* Added: Real-time button preview in admin panel.
 * Added: `MutationObserver` for better dynamic content detection.
 * Added: Smoother content expansion animation with CSS transitions.
 * Changed: Optimized JavaScript by replacing multiple `setTimeout` with `MutationObserver`.
@@ -113,6 +117,9 @@ Yes, the plugin includes filters (`rmu_min_characters`, `rmu_button_text`, `rmu_
 * Initial release with support for 20+ themes, multilingual support, analytics integration, and customizable settings.
 
 == Upgrade Notice ==
+
+= 1.2.1 =
+This update fixes security warnings related to input sanitization for the `rmu_apply_to` setting. Update to ensure compliance with WordPress coding standards. Back up your settings before upgrading.
 
 = 1.2.0 =
 This update adds per-post/page control, support for pages and archives, Divi/WPBakery compatibility, accessibility improvements, developer filters, and a smoother user experience. Update `read-more-universal.php` to fix a syntax error from previous versions. Back up your settings before upgrading.
