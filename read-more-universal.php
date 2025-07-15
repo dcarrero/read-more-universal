@@ -3,7 +3,7 @@
  * Plugin Name: Read More Universal
  * Plugin URI: https://github.com/dcarrero/read-more-universal
  * Description: Universal "Read More" system that automatically adapts to Twenty Twenty-Five, Astra, Elementor and other popular themes.
- * Version: 1.2.0
+ * Version: 1.2.1
  * Author: David Carrero Fernández-Baillo
  * Author URI: https://carrero.es
  * License: GPL v2 or later
@@ -524,7 +524,10 @@ class ReadMoreUniversal {
     }
     
     public function sanitize_array($input) {
-        return is_array($input) ? array_map('sanitize_text_field', $input) : array();
+        if (!is_array($input)) {
+            return array();
+        }
+        return array_map('sanitize_text_field', wp_unslash($input));
     }
     
     public function add_meta_box() {
@@ -572,7 +575,9 @@ class ReadMoreUniversal {
                 update_option('rmu_text_color', sanitize_hex_color(wp_unslash($_POST['rmu_text_color'] ?? '')));
                 update_option('rmu_border_radius', absint($_POST['rmu_border_radius'] ?? 25));
                 update_option('rmu_debug_mode', isset($_POST['rmu_debug_mode']) ? 1 : 0);
-                update_option('rmu_apply_to', $this->sanitize_array($_POST['rmu_apply_to'] ?? array('post')));
+                // Sanitize and unslash rmu_apply_to
+                $apply_to = isset($_POST['rmu_apply_to']) ? array_map('sanitize_text_field', wp_unslash($_POST['rmu_apply_to'])) : array('post');
+                update_option('rmu_apply_to', $this->sanitize_array($apply_to));
                 echo '<div class="notice notice-success"><p>' . esc_html__('Settings saved.', 'read-more-universal') . '</p></div>';
             } else {
                 echo '<div class="notice notice-error"><p>' . esc_html__('Security check failed. Please try again.', 'read-more-universal') . '</p></div>';
